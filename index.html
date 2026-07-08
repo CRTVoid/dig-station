@@ -301,7 +301,16 @@
             border: none;
             cursor: pointer;
         }
+        .slider-container .swiper-slide-prev,
+        .slider-container .swiper-slide-next {
+            opacity: 0.3 !important;
+            transform: scale(0.75) !important;
+        }
 
+        .slider-container .swiper-slide:not(.swiper-slide-active) {
+            opacity: 0.2 !important;
+        }
+        
         @media (max-width: 420px) {
             #app { padding: 16px 16px 16px; }
             .slider-container { height: 72px; margin: 20px 0 2px 0; }
