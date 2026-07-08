@@ -45,9 +45,10 @@
             position: relative;
         }
 
+        /* ===== SLIDER (Swiper) ===== */
         .slider-container {
             flex-shrink: 0;
-            height: 80px;
+            height: 90px;
             margin: 8px 0 16px;
             position: relative;
             overflow: hidden;
@@ -62,17 +63,22 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
             opacity: 0.08;
             transform: scale(0.4);
             filter: blur(5px);
             transition: all 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
             cursor: pointer;
-            padding: 8px 16px;
+            padding: 4px;
             border-radius: 12px;
+            background: transparent;
+        }
+
+        .slider-container .swiper-slide img {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
+            transition: all 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
             background: transparent;
         }
 
@@ -80,13 +86,16 @@
             opacity: 1;
             transform: scale(1);
             filter: blur(0);
-            background: rgba(255,255,255,0.06);
-            padding: 8px 24px;
-            border-radius: 16px;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-shadow: 0 0 40px rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.04);
+            padding: 4px;
+            border-radius: 14px;
+        }
+
+        .slider-container .swiper-slide-active img {
+            width: 80px;
+            height: 80px;
+            border-radius: 14px;
+            box-shadow: 0 0 40px rgba(255,255,255,0.05);
         }
 
         .slider-container .swiper-slide-prev,
@@ -96,11 +105,18 @@
             filter: blur(4px);
         }
 
+        .slider-container .swiper-slide-prev img,
+        .slider-container .swiper-slide-next img {
+            width: 50px;
+            height: 50px;
+        }
+
         .slider-container .swiper-slide:active {
             transform: scale(0.94);
             transition-duration: 0.05s;
         }
 
+        /* ===== VINYL ===== */
         .vinyl-container {
             flex: 1;
             display: flex;
@@ -117,11 +133,10 @@
             max-height: 68vw;
             position: relative;
             border-radius: 50%;
-            background: #121212;
-            box-shadow: 0 0 80px rgba(255,255,255,0.02), inset 0 0 60px rgba(0,0,0,0.5);
+            background: transparent;
+            box-shadow: none;
         }
 
-        /* ===== МЕРЦАНИЕ ===== */
         .vinyl::before {
             content: '';
             position: absolute;
@@ -161,7 +176,6 @@
             100% { opacity: 0.2; transform: scale(1); }
         }
 
-        /* ===== ВИНИЛ ИЗ DASH ===== */
         .vinyl-disc {
             width: 100%;
             height: 100%;
@@ -208,7 +222,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ===== ТЕНЬ ВИНИЛА ===== */
         .vinyl-shadow {
             position: absolute;
             top: -8%;
@@ -379,9 +392,11 @@
 
         @media (max-width: 420px) {
             #app { padding: 16px 16px 16px; }
-            .slider-container { height: 64px; margin: 4px 0 12px; }
-            .slider-container .swiper-slide { font-size: 13px; padding: 6px 12px; }
-            .slider-container .swiper-slide-active { font-size: 17px; padding: 6px 18px; }
+            .slider-container { height: 72px; margin: 4px 0 12px; }
+            .slider-container .swiper-slide img { width: 44px; height: 44px; }
+            .slider-container .swiper-slide-active img { width: 60px; height: 60px; }
+            .slider-container .swiper-slide-prev img,
+            .slider-container .swiper-slide-next img { width: 36px; height: 36px; }
             .vinyl { width: 220px; height: 220px; max-width: 60vw; max-height: 60vw; }
             .btn { width: 40px; height: 40px; padding: 6px; font-size: 1rem; }
             .btn-play { width: 60px; height: 60px; font-size: 1.4rem; }
@@ -393,9 +408,11 @@
         }
 
         @media (max-width: 360px) {
-            .slider-container { height: 56px; }
-            .slider-container .swiper-slide { font-size: 11px; padding: 4px 10px; }
-            .slider-container .swiper-slide-active { font-size: 14px; padding: 4px 14px; }
+            .slider-container { height: 60px; }
+            .slider-container .swiper-slide img { width: 36px; height: 36px; }
+            .slider-container .swiper-slide-active img { width: 50px; height: 50px; }
+            .slider-container .swiper-slide-prev img,
+            .slider-container .swiper-slide-next img { width: 30px; height: 30px; }
             .vinyl { width: 160px; height: 160px; max-width: 50vw; max-height: 50vw; }
         }
 
@@ -507,20 +524,21 @@
             'use strict';
 
             const STATIONS = [
-                { value: 'https://ice1.somafm.com/groovesalad-128-mp3', track: 'Groove Salad', station: 'SomaFM · Chillout' },
-                { value: 'https://ice1.somafm.com/darkzone-128-mp3', track: 'The Dark Zone', station: 'SomaFM · Ambient' },
-                { value: 'https://ice1.somafm.com/defcon-128-mp3', track: 'Def Con Radio', station: 'SomaFM · Dark Ambient' },
-                { value: 'https://ice1.somafm.com/metal-128-mp3', track: 'Metal Detector', station: 'SomaFM · Heavy Metal' },
-                { value: 'https://ice1.somafm.com/u80s-128-mp3', track: 'Underground 80s', station: 'SomaFM · 80s Underground' },
-                { value: 'https://ice1.somafm.com/7soul-128-mp3', track: 'Seven Inch Soul', station: 'SomaFM · Soul Classics' },
-                { value: 'https://ice1.somafm.com/insound-128-mp3', track: 'The In-Sound', station: 'SomaFM · 60s Garage' },
-                { value: 'https://ice1.somafm.com/covers-128-mp3', track: 'Covers', station: 'SomaFM · Cover Versions' },
-                { value: 'https://ice1.somafm.com/sf1033-128-mp3', track: 'SF 10-33', station: 'SomaFM · Police Radio' },
-                { value: 'https://ice1.somafm.com/scanner-128-mp3', track: 'SF Police Scanner', station: 'SomaFM · Live Scanner' },
-                { value: 'https://ice1.somafm.com/sfinsf-128-mp3', track: 'SF in SF', station: 'SomaFM · Live in SF' },
-                { value: 'https://ice1.somafm.com/vaporwaves-128-mp3', track: 'Vaporwaves', station: 'SomaFM · Vaporwave' },
-                { value: 'https://ice1.somafm.com/doomed-128-mp3', track: 'Doomed', station: 'SomaFM · Doom Metal' },
-                { value: 'https://ice1.somafm.com/beatblender-128-mp3', track: 'Beat Blender', station: 'SomaFM · Deep House' },
+                { value: 'https://ice1.somafm.com/groovesalad-128-mp3', track: 'Groove Salad', station: 'SomaFM · Chillout', img: 'https://somafm.com/img3/groovesalad-400.jpg' },
+                { value: 'https://ice1.somafm.com/darkzone-128-mp3', track: 'The Dark Zone', station: 'SomaFM · Ambient', img: 'https://somafm.com/img3/darkzone-400.jpg' },
+                { value: 'https://ice1.somafm.com/defcon-128-mp3', track: 'Def Con Radio', station: 'SomaFM · Dark Ambient', img: 'https://somafm.com/img3/defcon-400.jpg' },
+                { value: 'https://ice1.somafm.com/metal-128-mp3', track: 'Metal Detector', station: 'SomaFM · Heavy Metal', img: 'https://somafm.com/img3/metal-400.jpg' },
+                { value: 'https://ice1.somafm.com/u80s-128-mp3', track: 'Underground 80s', station: 'SomaFM · 80s Underground', img: 'https://somafm.com/img3/u80s-400.jpg' },
+                { value: 'https://ice1.somafm.com/7soul-128-mp3', track: 'Seven Inch Soul', station: 'SomaFM · Soul Classics', img: 'https://somafm.com/img3/7soul-400.jpg' },
+                { value: 'https://ice1.somafm.com/insound-128-mp3', track: 'The In-Sound', station: 'SomaFM · 60s Garage', img: 'https://somafm.com/img3/insound-400.jpg' },
+                { value: 'https://ice1.somafm.com/covers-128-mp3', track: 'Covers', station: 'SomaFM · Cover Versions', img: 'https://somafm.com/img3/covers-400.jpg' },
+                { value: 'https://ice1.somafm.com/sf1033-128-mp3', track: 'SF 10-33', station: 'SomaFM · Police Radio', img: 'https://somafm.com/img3/sf1033-400.jpg' },
+                { value: 'https://ice1.somafm.com/scanner-128-mp3', track: 'SF Police Scanner', station: 'SomaFM · Live Scanner', img: 'https://somafm.com/img3/scanner-400.jpg' },
+                { value: 'https://ice1.somafm.com/sfinsf-128-mp3', track: 'SF in SF', station: 'SomaFM · Live in SF', img: 'https://somafm.com/img3/sfinsf-400.jpg' },
+                { value: 'https://ice1.somafm.com/vaporwaves-128-mp3', track: 'Vaporwaves', station: 'SomaFM · Vaporwave', img: 'https://somafm.com/img3/vaporwaves-400.jpg' },
+                { value: 'https://ice1.somafm.com/doomed-128-mp3', track: 'Doomed', station: 'SomaFM · Doom Metal', img: 'https://somafm.com/img3/doomed-400.jpg' },
+                { value: 'https://ice1.somafm.com/beatblender-128-mp3', track: 'Beat Blender', station: 'SomaFM · Deep House', img: 'https://somafm.com/img3/beatblender-400.jpg' },
+                { value: 'https://ice1.somafm.com/bootliquor-128-mp3', track: 'Boot Liquor', station: 'SomaFM · Americana', img: 'https://somafm.com/img3/bootliquor-400.jpg' },
             ];
 
             const $ = (sel) => document.querySelector(sel);
@@ -547,8 +565,14 @@
                 STATIONS.forEach((station, index) => {
                     const slide = document.createElement('div');
                     slide.className = 'swiper-slide';
-                    slide.textContent = station.track;
                     slide.dataset.index = index;
+                    
+                    const img = document.createElement('img');
+                    img.src = station.img;
+                    img.alt = station.track;
+                    img.loading = 'lazy';
+                    
+                    slide.appendChild(img);
                     sliderWrapper.appendChild(slide);
                 });
 
@@ -588,6 +612,7 @@
                     ['#1a1a1a', '#0a0a0a'], ['#0a0a2a', '#0a0a0a'],
                     ['#1a1a2a', '#0a0a0a'], ['#1a0a2a', '#0a0a0a'],
                     ['#2a0a0a', '#0a0a0a'], ['#2a0a3a', '#0a0a0a'],
+                    ['#3a2a0a', '#0a0a0a'],
                 ];
                 const c = colors[index % colors.length];
                 if (c) {
