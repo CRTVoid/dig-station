@@ -39,7 +39,7 @@
             position: relative;
         }
 
-        /* ===== SLIDER ===== */
+        /* ===== SLIDER (как ISO-переключатель) ===== */
         .slider-container {
             flex-shrink: 0;
             height: 80px;
@@ -51,14 +51,23 @@
             align-items: center;
         }
 
-        .slider {
+        .slider-track {
+            position: relative;
+            width: 100%;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100%;
+            overflow: hidden;
+        }
+
+        .slider {
+            display: flex;
+            align-items: center;
             gap: 8px;
-            transition: transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
-            position: relative;
+            transition: transform 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
+            will-change: transform;
+            padding: 0 20px;
         }
 
         .station-item {
@@ -68,14 +77,14 @@
             font-size: 16px;
             font-weight: 600;
             letter-spacing: 0.5px;
-            transition: all 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+            transition: all 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
             white-space: nowrap;
             background: transparent;
             cursor: pointer;
             touch-action: manipulation;
-            opacity: 0.08;
-            transform: scale(0.5);
-            filter: blur(4px);
+            opacity: 0.06;
+            transform: scale(0.4);
+            filter: blur(5px);
         }
 
         .station-item.active {
@@ -83,19 +92,26 @@
             transform: scale(1);
             filter: blur(0);
             background: rgba(255,255,255,0.06);
-            padding: 8px 20px;
+            padding: 8px 24px;
             border-radius: 16px;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
-            letter-spacing: 0.8px;
-            text-shadow: 0 0 30px rgba(255,255,255,0.05);
+            letter-spacing: 1px;
+            text-shadow: 0 0 40px rgba(255,255,255,0.05);
         }
 
         .station-item.prev,
         .station-item.next {
             opacity: 0.12;
-            transform: scale(0.55);
-            filter: blur(3px);
+            transform: scale(0.5);
+            filter: blur(4px);
+        }
+
+        .station-item.hidden {
+            opacity: 0;
+            transform: scale(0.2);
+            filter: blur(8px);
+            pointer-events: none;
         }
 
         .station-item:active {
@@ -124,30 +140,31 @@
             box-shadow: 0 0 80px rgba(255,255,255,0.02), inset 0 0 60px rgba(0,0,0,0.5);
         }
 
-        /* ===== МЕРЦАНИЕ ПО КОНТУРУ ===== */
+        /* ===== МЕРЦАНИЕ ПО КОНТУРУ (размытое) ===== */
         .vinyl::before {
             content: '';
             position: absolute;
-            inset: -4px;
+            inset: -6px;
             border-radius: 50%;
-            padding: 3px;
+            padding: 4px;
             background: conic-gradient(
                 from 0deg,
-                rgba(255,255,255,0.02),
-                rgba(255,255,255,0.08),
-                rgba(255,255,255,0.02),
-                rgba(255,255,255,0.12),
-                rgba(255,255,255,0.02),
+                rgba(255,255,255,0.01),
                 rgba(255,255,255,0.06),
-                rgba(255,255,255,0.02)
+                rgba(255,255,255,0.01),
+                rgba(255,255,255,0.10),
+                rgba(255,255,255,0.01),
+                rgba(255,255,255,0.04),
+                rgba(255,255,255,0.01)
             );
             -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
             -webkit-mask-composite: xor;
             mask-composite: exclude;
             opacity: 0;
-            transition: opacity 1.8s ease;
-            animation: glowPulse 4s ease-in-out infinite;
+            transition: opacity 2s ease;
+            animation: glowPulse 5s ease-in-out infinite;
             animation-play-state: paused;
+            filter: blur(3px);
         }
 
         .vinyl.glow::before {
@@ -156,11 +173,11 @@
         }
 
         @keyframes glowPulse {
-            0% { opacity: 0.3; transform: scale(1); }
-            30% { opacity: 0.9; transform: scale(1.01); }
-            60% { opacity: 0.4; transform: scale(0.99); }
-            80% { opacity: 0.7; transform: scale(1.005); }
-            100% { opacity: 0.3; transform: scale(1); }
+            0% { opacity: 0.2; transform: scale(1); }
+            25% { opacity: 0.8; transform: scale(1.015); }
+            50% { opacity: 0.3; transform: scale(0.99); }
+            75% { opacity: 0.6; transform: scale(1.008); }
+            100% { opacity: 0.2; transform: scale(1); }
         }
 
         .vinyl-disc {
@@ -402,7 +419,7 @@
         @media (max-width: 420px) {
             #app { padding: 16px 16px 16px; }
             .station-item { font-size: 13px; padding: 6px 12px; }
-            .station-item.active { font-size: 15px; padding: 6px 16px; }
+            .station-item.active { font-size: 17px; padding: 6px 18px; }
             .slider-container { height: 64px; margin: 4px 0 12px; }
             .vinyl { width: 220px; height: 220px; max-width: 60vw; max-height: 60vw; }
             .btn { width: 40px; height: 40px; padding: 6px; }
@@ -416,7 +433,7 @@
 
         @media (max-width: 360px) {
             .station-item { font-size: 11px; padding: 4px 10px; }
-            .station-item.active { font-size: 13px; padding: 4px 14px; }
+            .station-item.active { font-size: 14px; padding: 4px 14px; }
             .slider-container { height: 56px; }
             .vinyl { width: 160px; height: 160px; max-width: 50vw; max-height: 50vw; }
         }
@@ -433,9 +450,11 @@
 <body>
 
     <div id="app">
-        <!-- Слайдер -->
+        <!-- Слайдер как ISO-переключатель -->
         <section class="slider-container">
-            <div class="slider" id="slider"></div>
+            <div class="slider-track">
+                <div class="slider" id="slider"></div>
+            </div>
         </section>
 
         <!-- Винил -->
@@ -481,6 +500,7 @@
         (function() {
             'use strict';
 
+            // Только проверенные рабочие потоки
             const STATIONS = [
                 { id: 'groovesalad',     name: 'Groove Salad',     stream: 'https://ice1.somafm.com/groovesalad-128-mp3',     colors: ['#3a1a3a', '#0a0a0a'] },
                 { id: 'spacestation',    name: 'Space Station',    stream: 'https://ice1.somafm.com/spacestation-128-mp3',   colors: ['#0a1a3a', '#0a0a0a'] },
@@ -495,11 +515,12 @@
                 { id: 'beatblender',     name: 'Beat Blender',     stream: 'https://ice1.somafm.com/beatblender-128-mp3',    colors: ['#2a0a3a', '#0a0a0a'] },
                 { id: 'sf1033',          name: 'SF 10-33',         stream: 'https://ice1.somafm.com/sf1033-128-mp3',         colors: ['#1a1a1a', '#0a0a0a'] },
                 { id: 'policescanner',   name: 'SF Police',        stream: 'https://ice1.somafm.com/policescanner-128-mp3',  colors: ['#0a0a2a', '#0a0a0a'] },
-                { id: 'blackrock',       name: 'Black Rock FM',    stream: 'https://ice1.somafm.com/blackrock-128-mp3',      colors: ['#2a1a0a', '#0a0a0a'] },
                 { id: 'vaporwaves',      name: 'Vaporwaves',       stream: 'https://ice1.somafm.com/vaporwaves-128-mp3',     colors: ['#1a0a2a', '#0a0a0a'] },
                 { id: 'n5md',            name: 'n5MD Radio',       stream: 'https://ice1.somafm.com/n5md-128-mp3',           colors: ['#0a1a2a', '#0a0a0a'] },
                 { id: 'sfinsf',          name: 'SF in SF',         stream: 'https://ice1.somafm.com/sfinsf-128-mp3',         colors: ['#1a1a2a', '#0a0a0a'] }
             ];
+
+            // Удаляем Black Rock FM — он стабильно 404
 
             const $ = (sel) => document.querySelector(sel);
             const $$ = (sel) => document.querySelectorAll(sel);
@@ -522,7 +543,7 @@
             let isPlaying = false;
             let isStopped = false;
 
-            // ---------- ПОСТРОЕНИЕ СЛАЙДЕРА ----------
+            // ---------- ПОСТРОЕНИЕ СЛАЙДЕРА (ISO-стиль) ----------
             function buildSlider() {
                 slider.innerHTML = '';
                 STATIONS.forEach((station, index) => {
@@ -532,22 +553,57 @@
                     el.dataset.index = index;
                     slider.appendChild(el);
                 });
-                updateSlider(0);
+                updateSlider(0, true);
             }
 
-            function updateSlider(activeIndex) {
+            function updateSlider(activeIndex, instant = false) {
                 const items = slider.querySelectorAll('.station-item');
                 const total = items.length;
+                const half = Math.floor(total / 2);
+                
+                // Вычисляем смещение для центрирования активного элемента
+                // Активный элемент должен быть строго по центру
+                let offset = 0;
                 items.forEach((item, index) => {
-                    item.classList.remove('active', 'prev', 'next');
-                    if (index === activeIndex) {
+                    item.classList.remove('active', 'prev', 'next', 'hidden');
+                    
+                    let distance = index - activeIndex;
+                    // Циклическое расстояние
+                    if (distance > total / 2) distance -= total;
+                    if (distance < -total / 2) distance += total;
+                    
+                    if (distance === 0) {
                         item.classList.add('active');
-                    } else if (index === (activeIndex - 1 + total) % total) {
+                    } else if (distance === -1 || distance === total - 1) {
                         item.classList.add('prev');
-                    } else if (index === (activeIndex + 1) % total) {
+                    } else if (distance === 1 || distance === -(total - 1)) {
                         item.classList.add('next');
+                    } else {
+                        item.classList.add('hidden');
                     }
                 });
+
+                // Рассчитываем смещение контейнера, чтобы активный элемент был по центру
+                const activeItem = items[activeIndex];
+                if (activeItem) {
+                    const containerWidth = slider.parentElement.offsetWidth;
+                    const itemWidth = activeItem.offsetWidth || 100;
+                    const totalWidth = items.length * (itemWidth + 8);
+                    
+                    // Центрируем активный элемент
+                    const centerOffset = (containerWidth / 2) - (itemWidth / 2);
+                    const rawOffset = -activeIndex * (itemWidth + 8);
+                    
+                    if (instant) {
+                        slider.style.transition = 'none';
+                        slider.style.transform = `translateX(${rawOffset + centerOffset}px)`;
+                        requestAnimationFrame(() => {
+                            slider.style.transition = '';
+                        });
+                    } else {
+                        slider.style.transform = `translateX(${rawOffset + centerOffset}px)`;
+                    }
+                }
             }
 
             // ---------- ФОН ----------
@@ -651,10 +707,9 @@
                 loadStation(newIndex);
                 
                 if (wasPlaying) {
-                    // Небольшая задержка перед запуском
                     setTimeout(() => {
                         play();
-                    }, 300);
+                    }, 400);
                 } else {
                     trackTitle.textContent = 'Stopped';
                     trackTitle.className = 'track-title';
@@ -676,7 +731,7 @@
                 if (wasPlaying) {
                     setTimeout(() => {
                         play();
-                    }, 300);
+                    }, 400);
                 } else {
                     trackTitle.textContent = 'Stopped';
                     trackTitle.className = 'track-title';
@@ -693,6 +748,15 @@
                     playIcon.innerHTML = '<polygon points="5,3 19,12 5,21"/>';
                     playBtn.classList.remove('active');
                 }
+            }
+
+            // ---------- ОБНОВЛЕНИЕ РАЗМЕРА ПРИ РЕСАЙЗЕ ----------
+            let resizeTimeout;
+            function handleResize() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    updateSlider(currentIndex);
+                }, 300);
             }
 
             // ---------- ИНИЦИАЛИЗАЦИЯ ----------
@@ -726,6 +790,8 @@
                     vinylDisc.style.animationPlayState = 'paused';
                     setVinylGlow(false);
                 });
+
+                window.addEventListener('resize', handleResize);
             }
 
             if (document.readyState === 'loading') {
