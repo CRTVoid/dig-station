@@ -14,7 +14,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     
     <style>
@@ -234,7 +233,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 14px;
+            gap: 20px;
             flex-shrink: 0;
             padding: 12px 0 6px;
         }
@@ -263,14 +262,14 @@
         }
 
         .btn-play {
-            width: 64px;
-            height: 64px;
+            width: 72px;
+            height: 72px;
             border-radius: 50%;
             background: rgba(255,255,255,0.06);
             border: 1px solid rgba(255,255,255,0.08);
             opacity: 1;
             padding: 0;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
         }
 
         .btn-play:active {
@@ -282,11 +281,9 @@
             opacity: 1;
         }
 
-        .btn-stop {
-            opacity: 0.2;
-            width: 40px;
-            height: 40px;
-            font-size: 0.9rem;
+        .btn-prev,
+        .btn-next {
+            font-size: 1.4rem;
         }
 
         .track-info {
@@ -387,7 +384,8 @@
             .slider-container .swiper-slide-active { font-size: 17px; padding: 6px 18px; }
             .vinyl { width: 220px; height: 220px; max-width: 60vw; max-height: 60vw; }
             .btn { width: 40px; height: 40px; padding: 6px; font-size: 1rem; }
-            .btn-play { width: 56px; height: 56px; font-size: 1.2rem; }
+            .btn-play { width: 60px; height: 60px; font-size: 1.4rem; }
+            .btn-prev, .btn-next { font-size: 1.1rem; }
             .track-title { font-size: 14px; }
             .track-artist { font-size: 12px; }
             .volume-container { right: 6px; height: 120px; opacity: 0.12; }
@@ -413,14 +411,12 @@
 <body>
 
     <div id="app">
-        <!-- Слайдер Swiper -->
         <section class="slider-container">
             <div class="swiper" id="stationSwiper">
                 <div class="swiper-wrapper" id="sliderWrapper"></div>
             </div>
         </section>
 
-        <!-- Винил -->
         <section class="vinyl-container">
             <div class="vinyl" id="vinyl">
                 <div class="vinyl-disc" id="vinylDisc"></div>
@@ -428,7 +424,6 @@
             </div>
         </section>
 
-        <!-- Транспорт -->
         <section class="controls">
             <button class="btn btn-prev" id="prevBtn" aria-label="Previous">
                 <i class="fas fa-step-backward"></i>
@@ -439,18 +434,13 @@
             <button class="btn btn-next" id="nextBtn" aria-label="Next">
                 <i class="fas fa-step-forward"></i>
             </button>
-            <button class="btn btn-stop" id="stopBtn" aria-label="Stop">
-                <i class="fas fa-stop"></i>
-            </button>
         </section>
 
-        <!-- Информация о треке -->
         <footer class="track-info">
             <div class="track-title loading" id="trackTitle">Connecting</div>
             <div class="track-artist" id="trackArtist">Radio</div>
         </footer>
 
-        <!-- Громкость -->
         <div class="volume-container">
             <input type="range" class="volume-slider" id="volumeSlider" 
                    min="0" max="1" step="0.05" value="0.7">
@@ -459,7 +449,6 @@
         <audio id="audioPlayer" preload="none"></audio>
     </div>
 
-    <!-- Swiper JS -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     <script>
@@ -491,7 +480,6 @@
             const playIcon = $('#playIcon');
             const prevBtn = $('#prevBtn');
             const nextBtn = $('#nextBtn');
-            const stopBtn = $('#stopBtn');
             const trackTitle = $('#trackTitle');
             const trackArtist = $('#trackArtist');
             const volumeSlider = $('#volumeSlider');
@@ -500,9 +488,8 @@
 
             let currentIndex = 0;
             let isPlaying = false;
-            let isStopped = false;
             let swiper = null;
-            let isLoading = false; // флаг загрузки
+            let isSwitching = false;
 
             // ---------- ПОСТРОЕНИЕ СЛАЙДЕРА ----------
             function buildSlider() {
@@ -519,7 +506,7 @@
                     slidesPerView: 3,
                     centeredSlides: true,
                     loop: true,
-                    speed: 600,
+                    speed: 500,
                     allowTouchMove: true,
                     watchSlidesProgress: true,
                     on: {
@@ -559,59 +546,38 @@
                 }
             }
 
-            // ---------- МЕРЦАНИЕ ----------
             function setVinylGlow(active) {
                 vinyl.classList.toggle('glow', active);
             }
 
-            // ---------- ЗАГРУЗКА СТАНЦИИ ----------
-            function loadStation(index) {
-                const station = STATIONS[index];
-                if (!station) return;
-                currentIndex = index;
-                audio.src = station.value;
-                audio.load();
-                updateBackground(index);
-                trackTitle.textContent = 'Loading...';
-                trackTitle.className = 'track-title loading';
-                trackArtist.textContent = station.station;
-                isLoading = true;
-            }
-
-            // ---------- ВОСПРОИЗВЕДЕНИЕ С ОЖИДАНИЕМ ЗАГРУЗКИ ----------
-            function playStation(index) {
-                if (isLoading) return; // защита от повторных вызовов
+            // ---------- ПЕРЕКЛЮЧЕНИЕ СТАНЦИИ ----------
+            function switchToStation(index) {
+                if (isSwitching) return;
+                isSwitching = true;
 
                 const station = STATIONS[index];
-                if (!station) return;
-
-                // Если уже играет та же станция — ничего не делаем
-                if (audio.src === station.value && isPlaying) return;
-
-                // Если это та же станция, но на паузе — просто играем
-                if (audio.src === station.value && !isPlaying) {
-                    audio.play().catch(() => {});
+                if (!station) {
+                    isSwitching = false;
                     return;
                 }
 
-                // Новая станция
-                loadStation(index);
+                currentIndex = index;
+                updateBackground(index);
 
-                // Ждём, пока аудио загрузится
-                const playAfterLoad = () => {
-                    audio.removeEventListener('canplay', playAfterLoad);
-                    audio.removeEventListener('loadedmetadata', playAfterLoad);
-                    isLoading = false;
-                    
+                // Меняем src и сразу запускаем
+                audio.src = station.value;
+                audio.load();
+
+                // Если плеер был включён — запускаем новую станцию сразу
+                if (isPlaying) {
                     audio.play()
                         .then(() => {
-                            isPlaying = true;
-                            updatePlayButton(true);
+                            trackTitle.textContent = station.track;
+                            trackTitle.className = 'track-title';
+                            trackArtist.textContent = station.station;
                             vinylDisc.style.animationPlayState = 'running';
                             setVinylGlow(true);
-                            trackTitle.textContent = STATIONS[currentIndex].track;
-                            trackTitle.className = 'track-title';
-                            trackArtist.textContent = STATIONS[currentIndex].station;
+                            isSwitching = false;
                         })
                         .catch((e) => {
                             console.warn('Play error:', e.message);
@@ -621,88 +587,69 @@
                             updatePlayButton(false);
                             vinylDisc.style.animationPlayState = 'paused';
                             setVinylGlow(false);
-                            isLoading = false;
+                            isSwitching = false;
                         });
-                };
-
-                audio.addEventListener('canplay', playAfterLoad);
-                audio.addEventListener('loadedmetadata', playAfterLoad);
-
-                // Таймаут на случай, если поток не грузится
-                setTimeout(() => {
-                    if (isLoading) {
-                        audio.removeEventListener('canplay', playAfterLoad);
-                        audio.removeEventListener('loadedmetadata', playAfterLoad);
-                        isLoading = false;
-                        trackTitle.textContent = 'Stream timeout';
-                        trackTitle.className = 'track-title loading';
-                        isPlaying = false;
-                        updatePlayButton(false);
-                        vinylDisc.style.animationPlayState = 'paused';
-                        setVinylGlow(false);
-                    }
-                }, 15000);
-            }
-
-            // ---------- ПЕРЕКЛЮЧЕНИЕ СТАНЦИИ (вызывается из Swiper) ----------
-            function switchToStation(index) {
-                if (index === currentIndex && isPlaying) return;
-                
-                const wasPlaying = isPlaying;
-                
-                // Останавливаем текущее воспроизведение
-                if (wasPlaying) {
-                    audio.pause();
-                    setVinylGlow(false);
-                    isPlaying = false;
-                    updatePlayButton(false);
-                    vinylDisc.style.animationPlayState = 'paused';
-                }
-                
-                // Загружаем и играем новую станцию
-                if (wasPlaying) {
-                    playStation(index);
                 } else {
-                    // Просто загружаем, но не играем
-                    loadStation(index);
-                    trackTitle.textContent = 'Stopped';
+                    // Если плеер выключен — просто показываем название
+                    trackTitle.textContent = station.track;
                     trackTitle.className = 'track-title';
-                    trackArtist.textContent = STATIONS[index].station;
+                    trackArtist.textContent = station.station;
+                    isSwitching = false;
                 }
             }
 
             // ---------- PLAY/PAUSE ----------
             function togglePlay() {
                 if (isPlaying) {
-                    pause();
+                    audio.pause();
+                    isPlaying = false;
+                    updatePlayButton(false);
+                    vinylDisc.style.animationPlayState = 'paused';
+                    setVinylGlow(false);
                 } else {
-                    // Если есть src — играем
-                    if (audio.src) {
-                        playStation(currentIndex);
+                    const station = STATIONS[currentIndex];
+                    if (!station) return;
+
+                    // Если аудио уже загружено — играем
+                    if (audio.src && audio.src === station.value) {
+                        audio.play()
+                            .then(() => {
+                                isPlaying = true;
+                                updatePlayButton(true);
+                                vinylDisc.style.animationPlayState = 'running';
+                                setVinylGlow(true);
+                                trackTitle.textContent = station.track;
+                                trackTitle.className = 'track-title';
+                                trackArtist.textContent = station.station;
+                            })
+                            .catch((e) => {
+                                console.warn('Play error:', e.message);
+                            });
                     } else {
-                        playStation(0);
+                        // Грузим и играем
+                        audio.src = station.value;
+                        audio.load();
+                        audio.play()
+                            .then(() => {
+                                isPlaying = true;
+                                updatePlayButton(true);
+                                vinylDisc.style.animationPlayState = 'running';
+                                setVinylGlow(true);
+                                trackTitle.textContent = station.track;
+                                trackTitle.className = 'track-title';
+                                trackArtist.textContent = station.station;
+                            })
+                            .catch((e) => {
+                                console.warn('Play error:', e.message);
+                                trackTitle.textContent = 'Stream unavailable';
+                                trackTitle.className = 'track-title loading';
+                                isPlaying = false;
+                                updatePlayButton(false);
+                                vinylDisc.style.animationPlayState = 'paused';
+                                setVinylGlow(false);
+                            });
                     }
                 }
-            }
-
-            function pause() {
-                audio.pause();
-                isPlaying = false;
-                updatePlayButton(false);
-                vinylDisc.style.animationPlayState = 'paused';
-                setVinylGlow(false);
-                // Останавливаем таймаут загрузки, если был
-                isLoading = false;
-            }
-
-            function stop() {
-                pause();
-                audio.currentTime = 0;
-                isStopped = true;
-                trackTitle.textContent = 'Stopped';
-                trackTitle.className = 'track-title';
-                trackArtist.textContent = STATIONS[currentIndex].station;
-                // Не удаляем src, чтобы можно было перезапустить
             }
 
             // ---------- КНОПКИ PREV/NEXT ----------
@@ -725,7 +672,10 @@
             // ---------- ИНИЦИАЛИЗАЦИЯ ----------
             function init() {
                 buildSlider();
-                loadStation(0);
+                updateBackground(0);
+                trackTitle.textContent = STATIONS[0].track;
+                trackTitle.className = 'track-title';
+                trackArtist.textContent = STATIONS[0].station;
                 updatePlayButton(false);
 
                 setTimeout(() => {
@@ -737,7 +687,6 @@
                 playBtn.addEventListener('click', togglePlay);
                 prevBtn.addEventListener('click', () => switchStation(-1));
                 nextBtn.addEventListener('click', () => switchStation(1));
-                stopBtn.addEventListener('click', stop);
 
                 volumeSlider.addEventListener('input', (e) => {
                     audio.volume = parseFloat(e.target.value);
@@ -747,7 +696,6 @@
                     trackTitle.textContent = 'Stream Error';
                     trackTitle.className = 'track-title loading';
                     isPlaying = false;
-                    isLoading = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
                     setVinylGlow(false);
