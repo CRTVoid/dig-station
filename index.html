@@ -178,45 +178,19 @@
             object-fit: cover;
         }
 
-        .vinyl-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 14%;
-            height: 14%;
-            border-radius: 50%;
-            background: radial-gradient(circle at 40% 40%, #666, #111 80%);
-            border: 2px solid #222;
-            box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
-            z-index: 2;
-        }
-
-        .vinyl-center::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 40%;
-            height: 40%;
-            border-radius: 50%;
-            background: radial-gradient(circle, #888, #222);
-        }
-
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        /* ===== CONTROLS (уменьшены на 10%, подняты на 15%) ===== */
+        /* ===== CONTROLS (подняты выше) ===== */
         .controls {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 18px;
             flex-shrink: 0;
-            padding: 4px 0 4px 0;
-            margin-top: -6px;
+            padding: 2px 0 4px 0;
+            margin-top: -12px;
         }
 
         .btn {
@@ -333,7 +307,7 @@
             .station-name-display .track { font-size: 13px; }
             .station-name-display .artist { font-size: 11px; }
             .vinyl { width: 220px; height: 220px; max-width: 60vw; max-height: 60vw; }
-            .controls { gap: 14px; padding: 2px 0 2px 0; margin-top: -4px; }
+            .controls { gap: 14px; padding: 0 0 2px 0; margin-top: -10px; }
             .btn { width: 36px; height: 36px; padding: 5px; font-size: 0.9rem; }
             .btn-play { width: 56px; height: 56px; font-size: 1.4rem; }
             .btn-prev, .btn-next { font-size: 1.1rem; }
@@ -350,7 +324,7 @@
             .station-name-display .track { font-size: 12px; }
             .station-name-display .artist { font-size: 10px; }
             .vinyl { width: 160px; height: 160px; max-width: 50vw; max-height: 50vw; }
-            .controls { gap: 10px; }
+            .controls { gap: 10px; margin-top: -8px; }
             .btn { width: 32px; height: 32px; font-size: 0.8rem; }
             .btn-play { width: 48px; height: 48px; font-size: 1.2rem; }
             .btn-prev, .btn-next { font-size: 0.9rem; }
@@ -387,7 +361,6 @@
                 <div class="vinyl-disc" id="vinylDisc">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Black_vinyl_record_on_white_background.jpg/512px-Black_vinyl_record_on_white_background.jpg" alt="Vinyl">
                 </div>
-                <div class="vinyl-center"></div>
             </div>
         </section>
 
@@ -420,21 +393,21 @@
             'use strict';
 
             const STATIONS = [
-                { value: 'https://ice1.somafm.com/groovesalad-128-mp3', track: 'Groove Salad', station: 'SomaFM · Chillout', img: 'https://somafm.com/logos/groovesalad-400.jpg' },
-                { value: 'https://ice1.somafm.com/darkzone-128-mp3', track: 'The Dark Zone', station: 'SomaFM · Ambient', img: 'https://somafm.com/logos/darkzone-400.jpg' },
-                { value: 'https://ice1.somafm.com/defcon-128-mp3', track: 'Def Con Radio', station: 'SomaFM · Dark Ambient', img: 'https://somafm.com/logos/defcon-400.jpg' },
-                { value: 'https://ice1.somafm.com/metal-128-mp3', track: 'Metal Detector', station: 'SomaFM · Heavy Metal', img: 'https://somafm.com/logos/metal-400.jpg' },
-                { value: 'https://ice1.somafm.com/u80s-128-mp3', track: 'Underground 80s', station: 'SomaFM · 80s Underground', img: 'https://somafm.com/logos/u80s-400.jpg' },
-                { value: 'https://ice1.somafm.com/7soul-128-mp3', track: 'Seven Inch Soul', station: 'SomaFM · Soul Classics', img: 'https://somafm.com/logos/7soul-400.jpg' },
-                { value: 'https://ice1.somafm.com/insound-128-mp3', track: 'The In-Sound', station: 'SomaFM · 60s Garage', img: 'https://somafm.com/logos/insound-400.jpg' },
-                { value: 'https://ice1.somafm.com/covers-128-mp3', track: 'Covers', station: 'SomaFM · Cover Versions', img: 'https://somafm.com/logos/covers-400.jpg' },
-                { value: 'https://ice1.somafm.com/sf1033-128-mp3', track: 'SF 10-33', station: 'SomaFM · Police Radio', img: 'https://somafm.com/logos/sf1033-400.jpg' },
-                { value: 'https://ice1.somafm.com/scanner-128-mp3', track: 'SF Police Scanner', station: 'SomaFM · Live Scanner', img: 'https://somafm.com/logos/scanner-400.jpg' },
-                { value: 'https://ice1.somafm.com/sfinsf-128-mp3', track: 'SF in SF', station: 'SomaFM · Live in SF', img: 'https://somafm.com/logos/sfinsf-400.jpg' },
-                { value: 'https://ice1.somafm.com/vaporwaves-128-mp3', track: 'Vaporwaves', station: 'SomaFM · Vaporwave', img: 'https://somafm.com/logos/vaporwaves-400.jpg' },
-                { value: 'https://ice1.somafm.com/doomed-128-mp3', track: 'Doomed', station: 'SomaFM · Doom Metal', img: 'https://somafm.com/logos/doomed-400.jpg' },
-                { value: 'https://ice1.somafm.com/beatblender-128-mp3', track: 'Beat Blender', station: 'SomaFM · Deep House', img: 'https://somafm.com/logos/beatblender-400.jpg' },
-                { value: 'https://ice1.somafm.com/bootliquor-128-mp3', track: 'Boot Liquor', station: 'SomaFM · Americana', img: 'https://somafm.com/logos/bootliquor-400.jpg' },
+                { value: 'https://ice1.somafm.com/groovesalad-128-mp3', track: 'Groove Salad', station: 'SomaFM · Chillout', img: 'https://somafm.com/logos/400/groovesalad-400.jpg' },
+                { value: 'https://ice1.somafm.com/darkzone-128-mp3', track: 'The Dark Zone', station: 'SomaFM · Ambient', img: 'https://somafm.com/logos/400/darkzone-400.jpg' },
+                { value: 'https://ice1.somafm.com/defcon-128-mp3', track: 'Def Con Radio', station: 'SomaFM · Dark Ambient', img: 'https://somafm.com/logos/400/defcon-400.jpg' },
+                { value: 'https://ice1.somafm.com/metal-128-mp3', track: 'Metal Detector', station: 'SomaFM · Heavy Metal', img: 'https://somafm.com/logos/400/metal-400.jpg' },
+                { value: 'https://ice1.somafm.com/u80s-128-mp3', track: 'Underground 80s', station: 'SomaFM · 80s Underground', img: 'https://somafm.com/logos/400/u80s-400.jpg' },
+                { value: 'https://ice1.somafm.com/7soul-128-mp3', track: 'Seven Inch Soul', station: 'SomaFM · Soul Classics', img: 'https://somafm.com/logos/400/7soul-400.jpg' },
+                { value: 'https://ice1.somafm.com/insound-128-mp3', track: 'The In-Sound', station: 'SomaFM · 60s Garage', img: 'https://somafm.com/logos/400/insound-400.jpg' },
+                { value: 'https://ice1.somafm.com/covers-128-mp3', track: 'Covers', station: 'SomaFM · Cover Versions', img: 'https://somafm.com/logos/400/covers-400.jpg' },
+                { value: 'https://ice1.somafm.com/sf1033-128-mp3', track: 'SF 10-33', station: 'SomaFM · Police Radio', img: 'https://somafm.com/logos/400/sf1033-400.jpg' },
+                { value: 'https://ice1.somafm.com/scanner-128-mp3', track: 'SF Police Scanner', station: 'SomaFM · Live Scanner', img: 'https://somafm.com/logos/400/scanner-400.jpg' },
+                { value: 'https://ice1.somafm.com/sfinsf-128-mp3', track: 'SF in SF', station: 'SomaFM · Live in SF', img: 'https://somafm.com/logos/400/sfinsf-400.jpg' },
+                { value: 'https://ice1.somafm.com/vaporwaves-128-mp3', track: 'Vaporwaves', station: 'SomaFM · Vaporwave', img: 'https://somafm.com/logos/400/vaporwaves-400.jpg' },
+                { value: 'https://ice1.somafm.com/doomed-128-mp3', track: 'Doomed', station: 'SomaFM · Doom Metal', img: 'https://somafm.com/logos/400/doomed-400.jpg' },
+                { value: 'https://ice1.somafm.com/beatblender-128-mp3', track: 'Beat Blender', station: 'SomaFM · Deep House', img: 'https://somafm.com/logos/400/beatblender-400.jpg' },
+                { value: 'https://ice1.somafm.com/bootliquor-128-mp3', track: 'Boot Liquor', station: 'SomaFM · Americana', img: 'https://somafm.com/logos/400/bootliquor-400.jpg' },
             ];
 
             const $ = (sel) => document.querySelector(sel);
