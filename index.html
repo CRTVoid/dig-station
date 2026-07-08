@@ -10,6 +10,9 @@
     
     <title>Radio Player</title>
     
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    
     <style>
         * {
             margin: 0;
@@ -39,55 +42,39 @@
             position: relative;
         }
 
-        /* ===== SLIDER (как ISO-переключатель) ===== */
+        /* ===== SLIDER (Swiper) ===== */
         .slider-container {
             flex-shrink: 0;
             height: 80px;
             margin: 8px 0 16px;
-            overflow: hidden;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            overflow: hidden;
         }
 
-        .slider-track {
-            position: relative;
+        .slider-container .swiper {
             width: 100%;
             height: 100%;
+        }
+
+        .slider-container .swiper-slide {
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
-        }
-
-        .slider {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: transform 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
-            will-change: transform;
-            padding: 0 20px;
-        }
-
-        .station-item {
-            flex: 0 0 auto;
-            padding: 8px 16px;
-            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             letter-spacing: 0.5px;
-            transition: all 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
             white-space: nowrap;
-            background: transparent;
+            opacity: 0.1;
+            transform: scale(0.5);
+            filter: blur(4px);
+            transition: all 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
             cursor: pointer;
-            touch-action: manipulation;
-            opacity: 0.06;
-            transform: scale(0.4);
-            filter: blur(5px);
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: transparent;
         }
 
-        .station-item.active {
+        .slider-container .swiper-slide-active {
             opacity: 1;
             transform: scale(1);
             filter: blur(0);
@@ -100,21 +87,14 @@
             text-shadow: 0 0 40px rgba(255,255,255,0.05);
         }
 
-        .station-item.prev,
-        .station-item.next {
-            opacity: 0.12;
-            transform: scale(0.5);
-            filter: blur(4px);
+        .slider-container .swiper-slide-prev,
+        .slider-container .swiper-slide-next {
+            opacity: 0.15;
+            transform: scale(0.55);
+            filter: blur(3px);
         }
 
-        .station-item.hidden {
-            opacity: 0;
-            transform: scale(0.2);
-            filter: blur(8px);
-            pointer-events: none;
-        }
-
-        .station-item:active {
+        .slider-container .swiper-slide:active {
             transform: scale(0.94);
             transition-duration: 0.05s;
         }
@@ -140,7 +120,7 @@
             box-shadow: 0 0 80px rgba(255,255,255,0.02), inset 0 0 60px rgba(0,0,0,0.5);
         }
 
-        /* ===== МЕРЦАНИЕ ПО КОНТУРУ (размытое) ===== */
+        /* ===== МЕРЦАНИЕ ===== */
         .vinyl::before {
             content: '';
             position: absolute;
@@ -418,9 +398,9 @@
         /* ===== RESPONSIVE ===== */
         @media (max-width: 420px) {
             #app { padding: 16px 16px 16px; }
-            .station-item { font-size: 13px; padding: 6px 12px; }
-            .station-item.active { font-size: 17px; padding: 6px 18px; }
             .slider-container { height: 64px; margin: 4px 0 12px; }
+            .slider-container .swiper-slide { font-size: 13px; padding: 6px 12px; }
+            .slider-container .swiper-slide-active { font-size: 17px; padding: 6px 18px; }
             .vinyl { width: 220px; height: 220px; max-width: 60vw; max-height: 60vw; }
             .btn { width: 40px; height: 40px; padding: 6px; }
             .btn-play { width: 56px; height: 56px; }
@@ -432,9 +412,9 @@
         }
 
         @media (max-width: 360px) {
-            .station-item { font-size: 11px; padding: 4px 10px; }
-            .station-item.active { font-size: 14px; padding: 4px 14px; }
             .slider-container { height: 56px; }
+            .slider-container .swiper-slide { font-size: 11px; padding: 4px 10px; }
+            .slider-container .swiper-slide-active { font-size: 14px; padding: 4px 14px; }
             .vinyl { width: 160px; height: 160px; max-width: 50vw; max-height: 50vw; }
         }
 
@@ -450,10 +430,10 @@
 <body>
 
     <div id="app">
-        <!-- Слайдер как ISO-переключатель -->
+        <!-- Слайдер Swiper -->
         <section class="slider-container">
-            <div class="slider-track">
-                <div class="slider" id="slider"></div>
+            <div class="swiper" id="stationSwiper">
+                <div class="swiper-wrapper" id="sliderWrapper"></div>
             </div>
         </section>
 
@@ -496,6 +476,9 @@
         <audio id="audioPlayer" preload="none"></audio>
     </div>
 
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
     <script>
         (function() {
             'use strict';
@@ -520,13 +503,10 @@
                 { id: 'sfinsf',          name: 'SF in SF',         stream: 'https://ice1.somafm.com/sfinsf-128-mp3',         colors: ['#1a1a2a', '#0a0a0a'] }
             ];
 
-            // Удаляем Black Rock FM — он стабильно 404
-
             const $ = (sel) => document.querySelector(sel);
             const $$ = (sel) => document.querySelectorAll(sel);
 
             const app = $('#app');
-            const slider = $('#slider');
             const vinyl = $('#vinyl');
             const vinylDisc = $('#vinylDisc');
             const playBtn = $('#playBtn');
@@ -538,72 +518,53 @@
             const trackArtist = $('#trackArtist');
             const volumeSlider = $('#volumeSlider');
             const audio = $('#audioPlayer');
+            const sliderWrapper = $('#sliderWrapper');
 
             let currentIndex = 0;
             let isPlaying = false;
             let isStopped = false;
+            let swiper = null;
 
-            // ---------- ПОСТРОЕНИЕ СЛАЙДЕРА (ISO-стиль) ----------
+            // ---------- ПОСТРОЕНИЕ СЛАЙДЕРА (Swiper) ----------
             function buildSlider() {
-                slider.innerHTML = '';
+                sliderWrapper.innerHTML = '';
                 STATIONS.forEach((station, index) => {
-                    const el = document.createElement('div');
-                    el.className = 'station-item';
-                    el.textContent = station.name;
-                    el.dataset.index = index;
-                    slider.appendChild(el);
+                    const slide = document.createElement('div');
+                    slide.className = 'swiper-slide';
+                    slide.textContent = station.name;
+                    slide.dataset.index = index;
+                    sliderWrapper.appendChild(slide);
                 });
-                updateSlider(0, true);
-            }
 
-            function updateSlider(activeIndex, instant = false) {
-                const items = slider.querySelectorAll('.station-item');
-                const total = items.length;
-                const half = Math.floor(total / 2);
-                
-                // Вычисляем смещение для центрирования активного элемента
-                // Активный элемент должен быть строго по центру
-                let offset = 0;
-                items.forEach((item, index) => {
-                    item.classList.remove('active', 'prev', 'next', 'hidden');
-                    
-                    let distance = index - activeIndex;
-                    // Циклическое расстояние
-                    if (distance > total / 2) distance -= total;
-                    if (distance < -total / 2) distance += total;
-                    
-                    if (distance === 0) {
-                        item.classList.add('active');
-                    } else if (distance === -1 || distance === total - 1) {
-                        item.classList.add('prev');
-                    } else if (distance === 1 || distance === -(total - 1)) {
-                        item.classList.add('next');
-                    } else {
-                        item.classList.add('hidden');
+                // Инициализация Swiper
+                swiper = new Swiper('#stationSwiper', {
+                    slidesPerView: 3,
+                    centeredSlides: true,
+                    loop: true,
+                    speed: 600,
+                    allowTouchMove: true,
+                    watchSlidesProgress: true,
+                    on: {
+                        slideChange: function() {
+                            const realIndex = this.realIndex;
+                            const station = STATIONS[realIndex];
+                            if (station) {
+                                currentIndex = realIndex;
+                                loadStation(realIndex);
+                            }
+                        }
                     }
                 });
 
-                // Рассчитываем смещение контейнера, чтобы активный элемент был по центру
-                const activeItem = items[activeIndex];
-                if (activeItem) {
-                    const containerWidth = slider.parentElement.offsetWidth;
-                    const itemWidth = activeItem.offsetWidth || 100;
-                    const totalWidth = items.length * (itemWidth + 8);
-                    
-                    // Центрируем активный элемент
-                    const centerOffset = (containerWidth / 2) - (itemWidth / 2);
-                    const rawOffset = -activeIndex * (itemWidth + 8);
-                    
-                    if (instant) {
-                        slider.style.transition = 'none';
-                        slider.style.transform = `translateX(${rawOffset + centerOffset}px)`;
-                        requestAnimationFrame(() => {
-                            slider.style.transition = '';
-                        });
-                    } else {
-                        slider.style.transform = `translateX(${rawOffset + centerOffset}px)`;
-                    }
-                }
+                // При клике на слайд — переключаемся
+                document.querySelectorAll('.swiper-slide').forEach((slide) => {
+                    slide.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        if (!isNaN(index) && swiper) {
+                            swiper.slideToLoop(index);
+                        }
+                    });
+                });
             }
 
             // ---------- ФОН ----------
@@ -631,7 +592,6 @@
                 currentIndex = index;
                 audio.src = station.stream;
                 audio.load();
-                updateSlider(index);
                 updateBackground(station.colors);
                 trackTitle.textContent = 'Loading...';
                 trackTitle.className = 'track-title loading';
@@ -690,52 +650,11 @@
             }
 
             function switchStation(direction) {
-                const total = STATIONS.length;
-                let newIndex = (currentIndex + direction + total) % total;
-                doSwitch(newIndex);
-            }
-
-            function doSwitch(newIndex) {
-                if (newIndex === currentIndex && isPlaying) return;
-                
-                const wasPlaying = isPlaying;
-                if (wasPlaying) {
-                    audio.pause();
-                    setVinylGlow(false);
-                }
-                
-                loadStation(newIndex);
-                
-                if (wasPlaying) {
-                    setTimeout(() => {
-                        play();
-                    }, 400);
+                if (!swiper) return;
+                if (direction === 1) {
+                    swiper.slideNext();
                 } else {
-                    trackTitle.textContent = 'Stopped';
-                    trackTitle.className = 'track-title';
-                    trackArtist.textContent = STATIONS[newIndex].name;
-                }
-            }
-
-            function goToStation(index) {
-                if (index === currentIndex) {
-                    if (!isPlaying) togglePlay();
-                    return;
-                }
-                const wasPlaying = isPlaying;
-                if (wasPlaying) {
-                    audio.pause();
-                    setVinylGlow(false);
-                }
-                loadStation(index);
-                if (wasPlaying) {
-                    setTimeout(() => {
-                        play();
-                    }, 400);
-                } else {
-                    trackTitle.textContent = 'Stopped';
-                    trackTitle.className = 'track-title';
-                    trackArtist.textContent = STATIONS[index].name;
+                    swiper.slidePrev();
                 }
             }
 
@@ -750,20 +669,18 @@
                 }
             }
 
-            // ---------- ОБНОВЛЕНИЕ РАЗМЕРА ПРИ РЕСАЙЗЕ ----------
-            let resizeTimeout;
-            function handleResize() {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(() => {
-                    updateSlider(currentIndex);
-                }, 300);
-            }
-
             // ---------- ИНИЦИАЛИЗАЦИЯ ----------
             function init() {
                 buildSlider();
                 loadStation(0);
                 updatePlayButton(false);
+
+                // Ждём, пока Swiper инициализируется
+                setTimeout(() => {
+                    if (swiper) {
+                        swiper.slideToLoop(0, 0);
+                    }
+                }, 100);
 
                 playBtn.addEventListener('click', togglePlay);
                 prevBtn.addEventListener('click', () => switchStation(-1));
@@ -774,14 +691,6 @@
                     audio.volume = parseFloat(e.target.value);
                 });
 
-                slider.addEventListener('click', (e) => {
-                    const item = e.target.closest('.station-item');
-                    if (item) {
-                        const index = parseInt(item.dataset.index);
-                        goToStation(index);
-                    }
-                });
-
                 audio.addEventListener('error', () => {
                     trackTitle.textContent = 'Stream Error';
                     trackTitle.className = 'track-title loading';
@@ -790,8 +699,6 @@
                     vinylDisc.style.animationPlayState = 'paused';
                     setVinylGlow(false);
                 });
-
-                window.addEventListener('resize', handleResize);
             }
 
             if (document.readyState === 'loading') {
