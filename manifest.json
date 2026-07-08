@@ -1,6 +1,6 @@
 {
-  "name": "Radio Player",
-  "short_name": "Radio",
+  "name": "Dig Station",
+  "short_name": "Dig Station",
   "description": "Atmospheric radio player with vinyl and neon aesthetics",
   "start_url": "index.html",
   "display": "standalone",
