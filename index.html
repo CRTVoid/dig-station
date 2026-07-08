@@ -121,6 +121,7 @@
             box-shadow: 0 0 80px rgba(255,255,255,0.02), inset 0 0 60px rgba(0,0,0,0.5);
         }
 
+        /* ===== МЕРЦАНИЕ ===== */
         .vinyl::before {
             content: '';
             position: absolute;
@@ -160,44 +161,21 @@
             100% { opacity: 0.2; transform: scale(1); }
         }
 
+        /* ===== ВИНИЛ ИЗ DASH ===== */
         .vinyl-disc {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: conic-gradient(
-                from 0deg,
-                #1a1a1a, #2d2d2d, #1a1a1a, #333333, #1a1a1a,
-                #2d2d2d, #1a1a1a, #333333, #1a1a1a
-            );
+            position: relative;
             animation: spin 8s linear infinite;
             animation-play-state: paused;
-            position: relative;
         }
 
-        .vinyl-disc::after {
-            content: '';
-            position: absolute;
-            inset: 6%;
+        .vinyl-disc svg {
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
-            background: radial-gradient(
-                circle at 35% 35%,
-                rgba(255,255,255,0.06) 0%,
-                transparent 60%
-            );
-        }
-
-        .vinyl-disc::before {
-            content: '';
-            position: absolute;
-            inset: 14%;
-            border-radius: 50%;
-            background: repeating-radial-gradient(
-                circle at center,
-                transparent 0%,
-                transparent 3%,
-                rgba(255,255,255,0.01) 3.5%,
-                transparent 4%
-            );
+            display: block;
         }
 
         .vinyl-center {
@@ -211,6 +189,7 @@
             background: radial-gradient(circle at 40% 40%, #666, #111 80%);
             border: 2px solid #222;
             box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+            z-index: 2;
         }
 
         .vinyl-center::after {
@@ -229,6 +208,27 @@
             to { transform: rotate(360deg); }
         }
 
+        /* ===== ТЕНЬ ВИНИЛА ===== */
+        .vinyl-shadow {
+            position: absolute;
+            top: -8%;
+            left: -8%;
+            width: 116%;
+            height: 116%;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at center, rgba(249,115,22,0.15) 0%, transparent 70%);
+            opacity: 0;
+            filter: blur(20px);
+            transition: opacity 0.6s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .vinyl.glow .vinyl-shadow {
+            opacity: 1;
+        }
+
+        /* ===== CONTROLS ===== */
         .controls {
             display: flex;
             justify-content: center;
@@ -419,7 +419,58 @@
 
         <section class="vinyl-container">
             <div class="vinyl" id="vinyl">
-                <div class="vinyl-disc" id="vinylDisc"></div>
+                <div class="vinyl-disc" id="vinylDisc">
+                    <svg viewBox="0 0 120 120">
+                        <defs>
+                            <radialGradient id="vinylGrad" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#1a1a1a"/>
+                                <stop offset="15%" stop-color="#0d0d0d"/>
+                                <stop offset="30%" stop-color="#1a1a1a"/>
+                                <stop offset="45%" stop-color="#0d0d0d"/>
+                                <stop offset="60%" stop-color="#1a1a1a"/>
+                                <stop offset="75%" stop-color="#0d0d0d"/>
+                                <stop offset="90%" stop-color="#1a1a1a"/>
+                                <stop offset="100%" stop-color="#0d0d0d"/>
+                            </radialGradient>
+                            <radialGradient id="shine1" cx="65%" cy="30%" r="35%">
+                                <stop offset="0%" stop-color="rgba(255,255,255,0.15)"/>
+                                <stop offset="60%" stop-color="rgba(255,255,255,0.04)"/>
+                                <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                            </radialGradient>
+                            <radialGradient id="shine2" cx="85%" cy="75%" r="25%">
+                                <stop offset="0%" stop-color="rgba(255,255,255,0.07)"/>
+                                <stop offset="70%" stop-color="rgba(255,255,255,0.02)"/>
+                                <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                            </radialGradient>
+                            <radialGradient id="labelGrad" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#f97316"/>
+                                <stop offset="100%" stop-color="#f97316" stop-opacity="0.7"/>
+                            </radialGradient>
+                        </defs>
+                        <circle cx="60" cy="60" r="56" fill="url(#vinylGrad)" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+                        <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
+                        <circle cx="60" cy="60" r="49" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.2"/>
+                        <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
+                        <circle cx="60" cy="60" r="43" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.2"/>
+                        <circle cx="60" cy="60" r="40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
+                        <circle cx="60" cy="60" r="37" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.2"/>
+                        <circle cx="60" cy="60" r="34" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
+                        <circle cx="60" cy="60" r="31" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.2"/>
+                        <circle cx="60" cy="60" r="28" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
+                        <circle cx="60" cy="60" r="25" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.2"/>
+                        <circle cx="60" cy="60" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
+                        <circle cx="60" cy="60" r="56" fill="url(#shine1)"/>
+                        <circle cx="60" cy="60" r="56" fill="url(#shine2)"/>
+                        <circle cx="60" cy="60" r="18" fill="url(#labelGrad)" opacity="0.9"/>
+                        <circle cx="60" cy="60" r="14" fill="#0a0a0a" opacity="0.12"/>
+                        <circle cx="60" cy="60" r="8" fill="#0a0a0a" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+                        <circle cx="60" cy="60" r="4" fill="#0d0d0d"/>
+                        <circle cx="60" cy="60" r="2" fill="#f97316" opacity="0.3"/>
+                        <text x="60" y="53" font-size="5" fill="rgba(255,255,255,0.7)" text-anchor="middle" font-weight="700" letter-spacing="0.5">S</text>
+                        <text x="60" y="63" font-size="3.5" fill="rgba(255,255,255,0.5)" text-anchor="middle" font-weight="300">FM</text>
+                    </svg>
+                </div>
+                <div class="vinyl-shadow"></div>
                 <div class="vinyl-center"></div>
             </div>
         </section>
@@ -491,7 +542,6 @@
             let swiper = null;
             let isSwitching = false;
 
-            // ---------- ПОСТРОЕНИЕ СЛАЙДЕРА ----------
             function buildSlider() {
                 sliderWrapper.innerHTML = '';
                 STATIONS.forEach((station, index) => {
@@ -529,7 +579,6 @@
                 });
             }
 
-            // ---------- ФОН ----------
             function updateBackground(index) {
                 const colors = [
                     ['#3a1a3a', '#0a0a0a'], ['#1a0a1a', '#000000'],
@@ -550,7 +599,6 @@
                 vinyl.classList.toggle('glow', active);
             }
 
-            // ---------- ПЕРЕКЛЮЧЕНИЕ СТАНЦИИ ----------
             function switchToStation(index) {
                 if (isSwitching) return;
                 isSwitching = true;
@@ -564,11 +612,9 @@
                 currentIndex = index;
                 updateBackground(index);
 
-                // Меняем src и сразу запускаем
                 audio.src = station.value;
                 audio.load();
 
-                // Если плеер был включён — запускаем новую станцию сразу
                 if (isPlaying) {
                     audio.play()
                         .then(() => {
@@ -590,7 +636,6 @@
                             isSwitching = false;
                         });
                 } else {
-                    // Если плеер выключен — просто показываем название
                     trackTitle.textContent = station.track;
                     trackTitle.className = 'track-title';
                     trackArtist.textContent = station.station;
@@ -598,7 +643,6 @@
                 }
             }
 
-            // ---------- PLAY/PAUSE ----------
             function togglePlay() {
                 if (isPlaying) {
                     audio.pause();
@@ -610,7 +654,6 @@
                     const station = STATIONS[currentIndex];
                     if (!station) return;
 
-                    // Если аудио уже загружено — играем
                     if (audio.src && audio.src === station.value) {
                         audio.play()
                             .then(() => {
@@ -626,7 +669,6 @@
                                 console.warn('Play error:', e.message);
                             });
                     } else {
-                        // Грузим и играем
                         audio.src = station.value;
                         audio.load();
                         audio.play()
@@ -652,13 +694,11 @@
                 }
             }
 
-            // ---------- КНОПКИ PREV/NEXT ----------
             function switchStation(direction) {
                 if (!swiper) return;
                 direction === 1 ? swiper.slideNext() : swiper.slidePrev();
             }
 
-            // ---------- КНОПКА PLAY/PAUSE ----------
             function updatePlayButton(playing) {
                 if (playing) {
                     playIcon.className = 'fas fa-pause';
@@ -669,7 +709,6 @@
                 }
             }
 
-            // ---------- ИНИЦИАЛИЗАЦИЯ ----------
             function init() {
                 buildSlider();
                 updateBackground(0);
