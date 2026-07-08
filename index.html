@@ -9,6 +9,10 @@
     <meta name="theme-color" content="#0a0a0a">
     
     <title>Radio Player</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
@@ -18,17 +22,17 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
         }
 
         html, body {
             height: 100%;
             overflow: hidden;
             background: #0a0a0a;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             color: #ffffff;
             touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
 
         #app {
@@ -64,9 +68,9 @@
             font-weight: 600;
             letter-spacing: 0.5px;
             white-space: nowrap;
-            opacity: 0.1;
-            transform: scale(0.5);
-            filter: blur(4px);
+            opacity: 0.08;
+            transform: scale(0.4);
+            filter: blur(5px);
             transition: all 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
             cursor: pointer;
             padding: 8px 16px;
@@ -89,9 +93,9 @@
 
         .slider-container .swiper-slide-prev,
         .slider-container .swiper-slide-next {
-            opacity: 0.15;
-            transform: scale(0.55);
-            filter: blur(3px);
+            opacity: 0.12;
+            transform: scale(0.5);
+            filter: blur(4px);
         }
 
         .slider-container .swiper-slide:active {
@@ -254,17 +258,12 @@
             border-radius: 50%;
             width: 48px;
             height: 48px;
+            font-size: 1.2rem;
         }
 
         .btn:active {
             transform: scale(0.88);
             opacity: 0.5;
-        }
-
-        .btn svg {
-            width: 22px;
-            height: 22px;
-            fill: currentColor;
         }
 
         .btn-play {
@@ -275,11 +274,7 @@
             border: 1px solid rgba(255,255,255,0.08);
             opacity: 1;
             padding: 0;
-        }
-
-        .btn-play svg {
-            width: 28px;
-            height: 28px;
+            font-size: 1.5rem;
         }
 
         .btn-play:active {
@@ -295,11 +290,7 @@
             opacity: 0.2;
             width: 40px;
             height: 40px;
-        }
-
-        .btn-stop svg {
-            width: 16px;
-            height: 16px;
+            font-size: 0.9rem;
         }
 
         /* ===== TRACK INFO ===== */
@@ -402,9 +393,8 @@
             .slider-container .swiper-slide { font-size: 13px; padding: 6px 12px; }
             .slider-container .swiper-slide-active { font-size: 17px; padding: 6px 18px; }
             .vinyl { width: 220px; height: 220px; max-width: 60vw; max-height: 60vw; }
-            .btn { width: 40px; height: 40px; padding: 6px; }
-            .btn-play { width: 56px; height: 56px; }
-            .btn-play svg { width: 24px; height: 24px; }
+            .btn { width: 40px; height: 40px; padding: 6px; font-size: 1rem; }
+            .btn-play { width: 56px; height: 56px; font-size: 1.2rem; }
             .track-title { font-size: 14px; }
             .track-artist { font-size: 12px; }
             .volume-container { right: 6px; height: 120px; opacity: 0.12; }
@@ -448,16 +438,16 @@
         <!-- Транспорт -->
         <section class="controls">
             <button class="btn btn-prev" id="prevBtn" aria-label="Previous">
-                <svg viewBox="0 0 24 24"><polygon points="18,4 8,12 18,20"/><rect x="4" y="4" width="2" height="16"/></svg>
+                <i class="fas fa-step-backward"></i>
             </button>
             <button class="btn btn-play" id="playBtn" aria-label="Play">
-                <svg viewBox="0 0 24 24" id="playIcon"><polygon points="5,3 19,12 5,21"/></svg>
+                <i class="fas fa-play" id="playIcon"></i>
             </button>
             <button class="btn btn-next" id="nextBtn" aria-label="Next">
-                <svg viewBox="0 0 24 24"><polygon points="6,4 16,12 6,20"/><rect x="18" y="4" width="2" height="16"/></svg>
+                <i class="fas fa-step-forward"></i>
             </button>
             <button class="btn btn-stop" id="stopBtn" aria-label="Stop">
-                <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/></svg>
+                <i class="fas fa-stop"></i>
             </button>
         </section>
 
@@ -470,7 +460,7 @@
         <!-- Громкость -->
         <div class="volume-container">
             <input type="range" class="volume-slider" id="volumeSlider" 
-                   min="0" max="1" step="0.01" value="0.8">
+                   min="0" max="1" step="0.05" value="0.7">
         </div>
 
         <audio id="audioPlayer" preload="none"></audio>
@@ -483,24 +473,22 @@
         (function() {
             'use strict';
 
-            // Только проверенные рабочие потоки
+            // === СТАНЦИИ (из dash.html, без Left Coast 70s) ===
             const STATIONS = [
-                { id: 'groovesalad',     name: 'Groove Salad',     stream: 'https://ice1.somafm.com/groovesalad-128-mp3',     colors: ['#3a1a3a', '#0a0a0a'] },
-                { id: 'spacestation',    name: 'Space Station',    stream: 'https://ice1.somafm.com/spacestation-128-mp3',   colors: ['#0a1a3a', '#0a0a0a'] },
-                { id: 'darkzone',        name: 'Dark Zone',        stream: 'https://ice1.somafm.com/darkzone-128-mp3',       colors: ['#1a0a1a', '#000000'] },
-                { id: 'metaldetector',   name: 'Metal Detector',   stream: 'https://ice1.somafm.com/metaldetector-128-mp3',  colors: ['#3a1a0a', '#0a0a0a'] },
-                { id: 'defcon',          name: 'DEF CON Radio',    stream: 'https://ice1.somafm.com/defcon-128-mp3',         colors: ['#0a3a1a', '#0a0a0a'] },
-                { id: 'underground80s',  name: 'Underground 80s',  stream: 'https://ice1.somafm.com/underground80s-128-mp3', colors: ['#2a1a3a', '#0a0a0a'] },
-                { id: 'bootliquor',      name: 'Boot Liquor',      stream: 'https://ice1.somafm.com/bootliquor-128-mp3',     colors: ['#3a2a0a', '#0a0a0a'] },
-                { id: 'sevensoul',       name: 'Seven Inch Soul',  stream: 'https://ice1.somafm.com/sevensoul-128-mp3',      colors: ['#1a2a3a', '#0a0a0a'] },
-                { id: 'fluid',           name: 'Fluid',            stream: 'https://ice1.somafm.com/fluid-128-mp3',          colors: ['#0a2a2a', '#0a0a0a'] },
-                { id: 'secretagent',     name: 'Secret Agent',     stream: 'https://ice1.somafm.com/secretagent-128-mp3',    colors: ['#0a1a4a', '#0a0a0a'] },
-                { id: 'beatblender',     name: 'Beat Blender',     stream: 'https://ice1.somafm.com/beatblender-128-mp3',    colors: ['#2a0a3a', '#0a0a0a'] },
-                { id: 'sf1033',          name: 'SF 10-33',         stream: 'https://ice1.somafm.com/sf1033-128-mp3',         colors: ['#1a1a1a', '#0a0a0a'] },
-                { id: 'policescanner',   name: 'SF Police',        stream: 'https://ice1.somafm.com/policescanner-128-mp3',  colors: ['#0a0a2a', '#0a0a0a'] },
-                { id: 'vaporwaves',      name: 'Vaporwaves',       stream: 'https://ice1.somafm.com/vaporwaves-128-mp3',     colors: ['#1a0a2a', '#0a0a0a'] },
-                { id: 'n5md',            name: 'n5MD Radio',       stream: 'https://ice1.somafm.com/n5md-128-mp3',           colors: ['#0a1a2a', '#0a0a0a'] },
-                { id: 'sfinsf',          name: 'SF in SF',         stream: 'https://ice1.somafm.com/sfinsf-128-mp3',         colors: ['#1a1a2a', '#0a0a0a'] }
+                { value: 'https://ice1.somafm.com/groovesalad-128-mp3', track: 'Groove Salad', station: 'SomaFM · Chillout' },
+                { value: 'https://ice1.somafm.com/darkzone-128-mp3', track: 'The Dark Zone', station: 'SomaFM · Ambient' },
+                { value: 'https://ice1.somafm.com/defcon-128-mp3', track: 'Def Con Radio', station: 'SomaFM · Dark Ambient' },
+                { value: 'https://ice1.somafm.com/metal-128-mp3', track: 'Metal Detector', station: 'SomaFM · Heavy Metal' },
+                { value: 'https://ice1.somafm.com/u80s-128-mp3', track: 'Underground 80s', station: 'SomaFM · 80s Underground' },
+                { value: 'https://ice1.somafm.com/7soul-128-mp3', track: 'Seven Inch Soul', station: 'SomaFM · Soul Classics' },
+                { value: 'https://ice1.somafm.com/insound-128-mp3', track: 'The In-Sound', station: 'SomaFM · 60s Garage' },
+                { value: 'https://ice1.somafm.com/covers-128-mp3', track: 'Covers', station: 'SomaFM · Cover Versions' },
+                { value: 'https://ice1.somafm.com/sf1033-128-mp3', track: 'SF 10-33', station: 'SomaFM · Police Radio' },
+                { value: 'https://ice1.somafm.com/scanner-128-mp3', track: 'SF Police Scanner', station: 'SomaFM · Live Scanner' },
+                { value: 'https://ice1.somafm.com/sfinsf-128-mp3', track: 'SF in SF', station: 'SomaFM · Live in SF' },
+                { value: 'https://ice1.somafm.com/vaporwaves-128-mp3', track: 'Vaporwaves', station: 'SomaFM · Vaporwave' },
+                { value: 'https://ice1.somafm.com/doomed-128-mp3', track: 'Doomed', station: 'SomaFM · Doom Metal' },
+                { value: 'https://ice1.somafm.com/beatblender-128-mp3', track: 'Beat Blender', station: 'SomaFM · Deep House' },
             ];
 
             const $ = (sel) => document.querySelector(sel);
@@ -531,7 +519,7 @@
                 STATIONS.forEach((station, index) => {
                     const slide = document.createElement('div');
                     slide.className = 'swiper-slide';
-                    slide.textContent = station.name;
+                    slide.textContent = station.track;
                     slide.dataset.index = index;
                     sliderWrapper.appendChild(slide);
                 });
@@ -568,21 +556,32 @@
             }
 
             // ---------- ФОН ----------
-            function updateBackground(colors) {
-                if (colors && colors.length >= 2) {
-                    app.style.background = `
-                        radial-gradient(ellipse at 50% 30%, ${colors[0]}, ${colors[1]})
-                    `;
+            function updateBackground(index) {
+                const colors = [
+                    ['#3a1a3a', '#0a0a0a'], // Groove Salad
+                    ['#1a0a1a', '#000000'], // Dark Zone
+                    ['#0a3a1a', '#0a0a0a'], // Def Con
+                    ['#3a1a0a', '#0a0a0a'], // Metal Detector
+                    ['#2a1a3a', '#0a0a0a'], // Underground 80s
+                    ['#1a2a3a', '#0a0a0a'], // Seven Inch Soul
+                    ['#1a3a2a', '#0a0a0a'], // The In-Sound
+                    ['#2a3a1a', '#0a0a0a'], // Covers
+                    ['#1a1a1a', '#0a0a0a'], // SF 10-33
+                    ['#0a0a2a', '#0a0a0a'], // SF Police
+                    ['#1a1a2a', '#0a0a0a'], // SF in SF
+                    ['#1a0a2a', '#0a0a0a'], // Vaporwaves
+                    ['#2a0a0a', '#0a0a0a'], // Doomed
+                    ['#2a0a3a', '#0a0a0a'], // Beat Blender
+                ];
+                const c = colors[index % colors.length];
+                if (c) {
+                    app.style.background = `radial-gradient(ellipse at 50% 30%, ${c[0]}, ${c[1]})`;
                 }
             }
 
             // ---------- МЕРЦАНИЕ ВИНИЛА ----------
             function setVinylGlow(active) {
-                if (active) {
-                    vinyl.classList.add('glow');
-                } else {
-                    vinyl.classList.remove('glow');
-                }
+                vinyl.classList.toggle('glow', active);
             }
 
             // ---------- АУДИО ----------
@@ -590,12 +589,12 @@
                 const station = STATIONS[index];
                 if (!station) return;
                 currentIndex = index;
-                audio.src = station.stream;
+                audio.src = station.value;
                 audio.load();
-                updateBackground(station.colors);
+                updateBackground(index);
                 trackTitle.textContent = 'Loading...';
                 trackTitle.className = 'track-title loading';
-                trackArtist.textContent = station.name;
+                trackArtist.textContent = station.station;
             }
 
             function play() {
@@ -609,9 +608,9 @@
                         updatePlayButton(true);
                         vinylDisc.style.animationPlayState = 'running';
                         setVinylGlow(true);
-                        trackTitle.textContent = STATIONS[currentIndex].name;
+                        trackTitle.textContent = STATIONS[currentIndex].track;
                         trackTitle.className = 'track-title';
-                        trackArtist.textContent = 'Now Playing';
+                        trackArtist.textContent = STATIONS[currentIndex].station;
                     })
                     .catch((e) => {
                         console.warn('Play error:', e.message);
@@ -638,33 +637,25 @@
                 isStopped = true;
                 trackTitle.textContent = 'Stopped';
                 trackTitle.className = 'track-title';
-                trackArtist.textContent = STATIONS[currentIndex].name;
+                trackArtist.textContent = STATIONS[currentIndex].station;
             }
 
             function togglePlay() {
-                if (isPlaying) {
-                    pause();
-                } else {
-                    play();
-                }
+                isPlaying ? pause() : play();
             }
 
             function switchStation(direction) {
                 if (!swiper) return;
-                if (direction === 1) {
-                    swiper.slideNext();
-                } else {
-                    swiper.slidePrev();
-                }
+                direction === 1 ? swiper.slideNext() : swiper.slidePrev();
             }
 
             // ---------- КНОПКА PLAY/PAUSE ----------
             function updatePlayButton(playing) {
                 if (playing) {
-                    playIcon.innerHTML = '<rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/>';
+                    playIcon.className = 'fas fa-pause';
                     playBtn.classList.add('active');
                 } else {
-                    playIcon.innerHTML = '<polygon points="5,3 19,12 5,21"/>';
+                    playIcon.className = 'fas fa-play';
                     playBtn.classList.remove('active');
                 }
             }
