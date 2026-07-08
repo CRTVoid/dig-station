@@ -418,216 +418,284 @@
             ];
 
             const $ = (sel) => document.querySelector(sel);
-            const app = $('#app');
-            const vinylDisc = $('#vinylDisc');
-            const playBtn = $('#playBtn');
-            const playIcon = $('#playIcon');
-            const prevBtn = $('#prevBtn');
-            const nextBtn = $('#nextBtn');
-            const volumeSlider = $('#volumeSlider');
-            const audio = $('#audioPlayer');
-            const sliderWrapper = $('#sliderWrapper');
-            const displayTrack = $('#displayTrack');
-            const displayArtist = $('#displayArtist');
+        const app = $('#app');
+        const vinylDisc = $('#vinylDisc');
+        const playBtn = $('#playBtn');
+        const playIcon = $('#playIcon');
+        const prevBtn = $('#prevBtn');
+        const nextBtn = $('#nextBtn');
+        const volumeSlider = $('#volumeSlider');
+        const audio = $('#audioPlayer');
+        const sliderWrapper = $('#sliderWrapper');
+        const displayTrack = $('#displayTrack');
+        const displayArtist = $('#displayArtist');
 
-            let currentIndex = 0;
-            let isPlaying = false;
-            let swiper = null;
-            let isSwitching = false;
+        let currentIndex = 0;
+        let isPlaying = false;
+        let swiper = null;
+        let isSwitching = false;
 
-            function buildSlider() {
-                sliderWrapper.innerHTML = '';
-                STATIONS.forEach((station, index) => {
-                    const slide = document.createElement('div');
-                    slide.className = 'swiper-slide';
-                    slide.dataset.index = index;
-                    
-                    const img = document.createElement('img');
-                    img.src = station.img;
-                    img.alt = station.track;
-                    img.loading = 'lazy';
-                    
-                    slide.appendChild(img);
-                    sliderWrapper.appendChild(slide);
-                });
+        // ---------- WEB AUDIO API (ГРОМКОСТЬ) ----------
+        let audioContext = null;
+        let gainNode = null;
+        let isAudioContextReady = false;
 
-                swiper = new Swiper('#stationSwiper', {
-                    slidesPerView: 3,
-                    centeredSlides: true,
-                    loop: true,
-                    speed: 500,
-                    allowTouchMove: true,
-                    watchSlidesProgress: true,
-                    on: {
-                        slideChange: function() {
-                            const realIndex = this.realIndex;
-                            if (realIndex !== currentIndex) {
-                                switchToStation(realIndex);
-                            }
+        function initAudioContext() {
+            if (isAudioContextReady) return;
+            
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                // Создаём источник из HTMLAudioElement
+                const source = audioContext.createMediaElementSource(audio);
+                gainNode = audioContext.createGain();
+                
+                // Соединяем: аудио -> регулятор громкости -> колонки
+                source.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Устанавливаем текущую громкость
+                gainNode.gain.value = parseFloat(volumeSlider.value);
+                
+                isAudioContextReady = true;
+                console.log('AudioContext инициализирован');
+            } catch (e) {
+                console.warn('Web Audio API не поддерживается, используем fallback:', e);
+                // Если Web Audio не работает — используем обычный volume
+                isAudioContextReady = false;
+            }
+        }
+
+        function setVolume(value) {
+            const val = parseFloat(value);
+            if (gainNode && isAudioContextReady) {
+                gainNode.gain.value = val;
+            } else {
+                // Fallback для старых браузеров / ПК
+                audio.volume = val;
+            }
+        }
+
+        // ---------- ОСТАЛЬНАЯ ЛОГИКА ----------
+
+        function buildSlider() {
+            sliderWrapper.innerHTML = '';
+            STATIONS.forEach((station, index) => {
+                const slide = document.createElement('div');
+                slide.className = 'swiper-slide';
+                slide.dataset.index = index;
+                
+                const img = document.createElement('img');
+                img.src = station.img;
+                img.alt = station.track;
+                img.loading = 'lazy';
+                
+                slide.appendChild(img);
+                sliderWrapper.appendChild(slide);
+            });
+
+            swiper = new Swiper('#stationSwiper', {
+                slidesPerView: 3,
+                centeredSlides: true,
+                loop: true,
+                spaceBetween: 8,
+                speed: 500,
+                allowTouchMove: true,
+                watchSlidesProgress: true,
+                on: {
+                    slideChange: function() {
+                        const realIndex = this.realIndex;
+                        if (realIndex !== currentIndex) {
+                            switchToStation(realIndex);
                         }
                     }
-                });
+                }
+            });
 
-                document.querySelectorAll('.swiper-slide').forEach((slide) => {
-                    slide.addEventListener('click', function() {
-                        const index = parseInt(this.dataset.index);
-                        if (!isNaN(index) && swiper) {
-                            swiper.slideToLoop(index);
-                        }
+            document.querySelectorAll('.swiper-slide').forEach((slide) => {
+                slide.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    if (!isNaN(index) && swiper) {
+                        swiper.slideToLoop(index);
+                    }
+                });
+            });
+        }
+
+        function updateBackground(index) {
+            const colors = [
+                ['#3a1a3a', '#0a0a0a'], ['#1a0a1a', '#000000'],
+                ['#0a3a1a', '#0a0a0a'], ['#3a1a0a', '#0a0a0a'],
+                ['#2a1a3a', '#0a0a0a'], ['#1a2a3a', '#0a0a0a'],
+                ['#1a3a2a', '#0a0a0a'], ['#2a3a1a', '#0a0a0a'],
+                ['#1a1a1a', '#0a0a0a'], ['#0a0a2a', '#0a0a0a'],
+                ['#1a1a2a', '#0a0a0a'], ['#1a0a2a', '#0a0a0a'],
+                ['#2a0a0a', '#0a0a0a'], ['#2a0a3a', '#0a0a0a'],
+                ['#3a2a0a', '#0a0a0a'],
+            ];
+            const c = colors[index % colors.length];
+            if (c) {
+                app.style.background = `radial-gradient(ellipse at 50% 30%, ${c[0]}, ${c[1]})`;
+            }
+        }
+
+        function updateDisplay(index) {
+            const station = STATIONS[index];
+            if (station) {
+                displayTrack.textContent = station.track;
+                displayArtist.textContent = station.station;
+            }
+        }
+
+        function switchToStation(index) {
+            if (isSwitching) return;
+            isSwitching = true;
+
+            const station = STATIONS[index];
+            if (!station) {
+                isSwitching = false;
+                return;
+            }
+
+            currentIndex = index;
+            updateBackground(index);
+            updateDisplay(index);
+
+            // Меняем поток
+            audio.src = station.value;
+            audio.load();
+
+            if (isPlaying) {
+                // Если AudioContext ещё не инициализирован — инициализируем
+                if (!isAudioContextReady) {
+                    initAudioContext();
+                }
+                
+                audio.play()
+                    .then(() => {
+                        vinylDisc.style.animationPlayState = 'running';
+                        isSwitching = false;
+                    })
+                    .catch((e) => {
+                        console.warn('Play error:', e.message);
+                        isPlaying = false;
+                        updatePlayButton(false);
+                        vinylDisc.style.animationPlayState = 'paused';
+                        isSwitching = false;
                     });
-                });
+            } else {
+                isSwitching = false;
             }
+        }
 
-            function updateBackground(index) {
-                const colors = [
-                    ['#3a1a3a', '#0a0a0a'], ['#1a0a1a', '#000000'],
-                    ['#0a3a1a', '#0a0a0a'], ['#3a1a0a', '#0a0a0a'],
-                    ['#2a1a3a', '#0a0a0a'], ['#1a2a3a', '#0a0a0a'],
-                    ['#1a3a2a', '#0a0a0a'], ['#2a3a1a', '#0a0a0a'],
-                    ['#1a1a1a', '#0a0a0a'], ['#0a0a2a', '#0a0a0a'],
-                    ['#1a1a2a', '#0a0a0a'], ['#1a0a2a', '#0a0a0a'],
-                    ['#2a0a0a', '#0a0a0a'], ['#2a0a3a', '#0a0a0a'],
-                    ['#2a3a1a', '#0a0a0a'],
-                    ['#3a2a0a', '#0a0a0a'],
-                ];
-                const c = colors[index % colors.length];
-                if (c) {
-                    app.style.background = `radial-gradient(ellipse at 50% 30%, ${c[0]}, ${c[1]})`;
-                }
-            }
-
-            function updateDisplay(index) {
-                const station = STATIONS[index];
-                if (station) {
-                    displayTrack.textContent = station.track;
-                    displayArtist.textContent = station.station;
-                }
-            }
-
-            function switchToStation(index) {
-                if (isSwitching) return;
-                isSwitching = true;
-
-                const station = STATIONS[index];
-                if (!station) {
-                    isSwitching = false;
-                    return;
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+                updatePlayButton(false);
+                vinylDisc.style.animationPlayState = 'paused';
+                // Не останавливаем AudioContext, чтобы громкость сохранилась
+            } else {
+                // Инициализируем AudioContext при первом воспроизведении
+                if (!isAudioContextReady) {
+                    initAudioContext();
                 }
 
-                currentIndex = index;
-                updateBackground(index);
-                updateDisplay(index);
+                const station = STATIONS[currentIndex];
+                if (!station) return;
 
-                audio.src = station.value;
-                audio.load();
-
-                if (isPlaying) {
+                // Если источник уже установлен
+                if (audio.src) {
                     audio.play()
                         .then(() => {
+                            isPlaying = true;
+                            updatePlayButton(true);
                             vinylDisc.style.animationPlayState = 'running';
-                            isSwitching = false;
+                        })
+                        .catch((e) => {
+                            console.warn('Play error:', e.message);
+                        });
+                } else {
+                    // Первый запуск — устанавливаем поток
+                    audio.src = station.value;
+                    audio.load();
+                    audio.play()
+                        .then(() => {
+                            isPlaying = true;
+                            updatePlayButton(true);
+                            vinylDisc.style.animationPlayState = 'running';
                         })
                         .catch((e) => {
                             console.warn('Play error:', e.message);
                             isPlaying = false;
                             updatePlayButton(false);
                             vinylDisc.style.animationPlayState = 'paused';
-                            isSwitching = false;
                         });
-                } else {
-                    isSwitching = false;
                 }
             }
+        }
 
-            function togglePlay() {
-                if (isPlaying) {
-                    audio.pause();
-                    isPlaying = false;
-                    updatePlayButton(false);
-                    vinylDisc.style.animationPlayState = 'paused';
-                } else {
-                    const station = STATIONS[currentIndex];
-                    if (!station) return;
+        function switchStation(direction) {
+            if (!swiper) return;
+            direction === 1 ? swiper.slideNext() : swiper.slidePrev();
+        }
 
-                    if (audio.src && audio.src === station.value) {
-                        audio.play()
-                            .then(() => {
-                                isPlaying = true;
-                                updatePlayButton(true);
-                                vinylDisc.style.animationPlayState = 'running';
-                            })
-                            .catch((e) => {
-                                console.warn('Play error:', e.message);
-                            });
-                    } else {
-                        audio.src = station.value;
-                        audio.load();
-                        audio.play()
-                            .then(() => {
-                                isPlaying = true;
-                                updatePlayButton(true);
-                                vinylDisc.style.animationPlayState = 'running';
-                            })
-                            .catch((e) => {
-                                console.warn('Play error:', e.message);
-                                isPlaying = false;
-                                updatePlayButton(false);
-                                vinylDisc.style.animationPlayState = 'paused';
-                            });
-                    }
-                }
-            }
-
-            function switchStation(direction) {
-                if (!swiper) return;
-                direction === 1 ? swiper.slideNext() : swiper.slidePrev();
-            }
-
-            function updatePlayButton(playing) {
-                if (playing) {
-                    playIcon.className = 'fas fa-pause';
-                    playBtn.classList.add('active');
-                } else {
-                    playIcon.className = 'fas fa-play';
-                    playBtn.classList.remove('active');
-                }
-            }
-
-            function init() {
-                buildSlider();
-                updateBackground(0);
-                updateDisplay(0);
-                updatePlayButton(false);
-
-                setTimeout(() => {
-                    if (swiper) {
-                        swiper.slideToLoop(0, 0);
-                    }
-                }, 100);
-
-                playBtn.addEventListener('click', togglePlay);
-                prevBtn.addEventListener('click', () => switchStation(-1));
-                nextBtn.addEventListener('click', () => switchStation(1));
-
-                volumeSlider.addEventListener('input', (e) => {
-                    audio.volume = parseFloat(e.target.value);
-                });
-
-                audio.addEventListener('error', () => {
-                    isPlaying = false;
-                    updatePlayButton(false);
-                    vinylDisc.style.animationPlayState = 'paused';
-                });
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', init);
+        function updatePlayButton(playing) {
+            if (playing) {
+                playIcon.className = 'fas fa-pause';
+                playBtn.classList.add('active');
             } else {
-                init();
+                playIcon.className = 'fas fa-play';
+                playBtn.classList.remove('active');
             }
+        }
 
-        })();
-    </script>
+        function init() {
+            buildSlider();
+            updateBackground(0);
+            updateDisplay(0);
+            updatePlayButton(false);
+
+            // Устанавливаем начальную громкость (пока через fallback)
+            audio.volume = parseFloat(volumeSlider.value);
+
+            setTimeout(() => {
+                if (swiper) {
+                    swiper.slideToLoop(0, 0);
+                }
+            }, 100);
+
+            playBtn.addEventListener('click', togglePlay);
+            prevBtn.addEventListener('click', () => switchStation(-1));
+            nextBtn.addEventListener('click', () => switchStation(1));
+
+            // Управление громкостью
+            volumeSlider.addEventListener('input', (e) => {
+                const val = e.target.value;
+                setVolume(val);
+            });
+
+            // Если на iOS / Safari, нужно разбудить AudioContext при касании
+            document.addEventListener('touchstart', () => {
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+            }, { passive: true });
+
+            audio.addEventListener('error', () => {
+                isPlaying = false;
+                updatePlayButton(false);
+                vinylDisc.style.animationPlayState = 'paused';
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+    })();
+</script>
 
 </body>
 </html>
