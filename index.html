@@ -49,9 +49,10 @@
         .slider-container {
             flex-shrink: 0;
             height: 90px;
-            margin: 8px 0 16px;
+            margin: 0 0 4px 0;
             position: relative;
             overflow: hidden;
+            background: transparent;
         }
 
         .slider-container .swiper {
@@ -86,7 +87,7 @@
             opacity: 1;
             transform: scale(1);
             filter: blur(0);
-            background: rgba(255,255,255,0.04);
+            background: transparent;
             padding: 4px;
             border-radius: 14px;
         }
@@ -116,6 +117,28 @@
             transition-duration: 0.05s;
         }
 
+        /* ===== STATION NAME UNDER SLIDER ===== */
+        .station-name-display {
+            flex-shrink: 0;
+            text-align: center;
+            padding: 2px 0 8px 0;
+            min-height: 28px;
+        }
+
+        .station-name-display .track {
+            font-size: 15px;
+            font-weight: 600;
+            opacity: 0.85;
+            letter-spacing: 0.3px;
+        }
+
+        .station-name-display .artist {
+            font-size: 12px;
+            opacity: 0.4;
+            margin-top: 1px;
+            letter-spacing: 0.5px;
+        }
+
         /* ===== VINYL ===== */
         .vinyl-container {
             flex: 1;
@@ -123,7 +146,7 @@
             justify-content: center;
             align-items: center;
             min-height: 0;
-            padding: 4px 0;
+            padding: 0 0 4px 0;
         }
 
         .vinyl {
@@ -241,14 +264,14 @@
             opacity: 1;
         }
 
-        /* ===== CONTROLS ===== */
+        /* ===== CONTROLS (увеличены на 10%) ===== */
         .controls {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 20px;
+            gap: 22px;
             flex-shrink: 0;
-            padding: 12px 0 6px;
+            padding: 8px 0 4px 0;
         }
 
         .btn {
@@ -264,9 +287,9 @@
             justify-content: center;
             touch-action: manipulation;
             border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            font-size: 1.2rem;
+            width: 52px;
+            height: 52px;
+            font-size: 1.3rem;
         }
 
         .btn:active {
@@ -275,14 +298,14 @@
         }
 
         .btn-play {
-            width: 72px;
-            height: 72px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             background: rgba(255,255,255,0.06);
             border: 1px solid rgba(255,255,255,0.08);
             opacity: 1;
             padding: 0;
-            font-size: 1.8rem;
+            font-size: 2.0rem;
         }
 
         .btn-play:active {
@@ -296,44 +319,12 @@
 
         .btn-prev,
         .btn-next {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
         }
 
+        /* ===== TRACK INFO (скрыто, используем station-name-display) ===== */
         .track-info {
-            flex-shrink: 0;
-            text-align: center;
-            padding: 6px 0 2px;
-            min-height: 52px;
-        }
-
-        .track-title {
-            font-size: 16px;
-            font-weight: 500;
-            opacity: 0.85;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            letter-spacing: 0.3px;
-        }
-
-        .track-title.loading {
-            opacity: 0.3;
-            animation: pulse 1.2s ease-in-out infinite;
-        }
-
-        .track-artist {
-            font-size: 13px;
-            opacity: 0.4;
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            letter-spacing: 0.5px;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.6; }
+            display: none;
         }
 
         .volume-container {
@@ -392,17 +383,17 @@
 
         @media (max-width: 420px) {
             #app { padding: 16px 16px 16px; }
-            .slider-container { height: 72px; margin: 4px 0 12px; }
+            .slider-container { height: 72px; margin: 0; }
             .slider-container .swiper-slide img { width: 44px; height: 44px; }
             .slider-container .swiper-slide-active img { width: 60px; height: 60px; }
             .slider-container .swiper-slide-prev img,
             .slider-container .swiper-slide-next img { width: 36px; height: 36px; }
+            .station-name-display .track { font-size: 13px; }
+            .station-name-display .artist { font-size: 11px; }
             .vinyl { width: 220px; height: 220px; max-width: 60vw; max-height: 60vw; }
-            .btn { width: 40px; height: 40px; padding: 6px; font-size: 1rem; }
-            .btn-play { width: 60px; height: 60px; font-size: 1.4rem; }
-            .btn-prev, .btn-next { font-size: 1.1rem; }
-            .track-title { font-size: 14px; }
-            .track-artist { font-size: 12px; }
+            .btn { width: 44px; height: 44px; padding: 6px; font-size: 1.1rem; }
+            .btn-play { width: 66px; height: 66px; font-size: 1.6rem; }
+            .btn-prev, .btn-next { font-size: 1.3rem; }
             .volume-container { right: 6px; height: 120px; opacity: 0.12; }
             .volume-slider { width: 80px; }
         }
@@ -413,7 +404,12 @@
             .slider-container .swiper-slide-active img { width: 50px; height: 50px; }
             .slider-container .swiper-slide-prev img,
             .slider-container .swiper-slide-next img { width: 30px; height: 30px; }
+            .station-name-display .track { font-size: 12px; }
+            .station-name-display .artist { font-size: 10px; }
             .vinyl { width: 160px; height: 160px; max-width: 50vw; max-height: 50vw; }
+            .btn { width: 38px; height: 38px; font-size: 0.9rem; }
+            .btn-play { width: 56px; height: 56px; font-size: 1.3rem; }
+            .btn-prev, .btn-next { font-size: 1.1rem; }
         }
 
         @supports (padding: max(0px)) {
@@ -428,12 +424,20 @@
 <body>
 
     <div id="app">
+        <!-- Слайдер Swiper -->
         <section class="slider-container">
             <div class="swiper" id="stationSwiper">
                 <div class="swiper-wrapper" id="sliderWrapper"></div>
             </div>
         </section>
 
+        <!-- Название станции под каруселью -->
+        <div class="station-name-display" id="stationNameDisplay">
+            <div class="track" id="displayTrack">Groove Salad</div>
+            <div class="artist" id="displayArtist">SomaFM · Chillout</div>
+        </div>
+
+        <!-- Винил -->
         <section class="vinyl-container">
             <div class="vinyl" id="vinyl">
                 <div class="vinyl-disc" id="vinylDisc">
@@ -492,6 +496,7 @@
             </div>
         </section>
 
+        <!-- Управление -->
         <section class="controls">
             <button class="btn btn-prev" id="prevBtn" aria-label="Previous">
                 <i class="fas fa-step-backward"></i>
@@ -504,11 +509,13 @@
             </button>
         </section>
 
+        <!-- Скрытый трек-инфо (для совместимости) -->
         <footer class="track-info">
             <div class="track-title loading" id="trackTitle">Connecting</div>
             <div class="track-artist" id="trackArtist">Radio</div>
         </footer>
 
+        <!-- Громкость -->
         <div class="volume-container">
             <input type="range" class="volume-slider" id="volumeSlider" 
                    min="0" max="1" step="0.05" value="0.7">
@@ -524,21 +531,21 @@
             'use strict';
 
             const STATIONS = [
-                { value: 'https://ice1.somafm.com/groovesalad-128-mp3', track: 'Groove Salad', station: 'SomaFM · Chillout', img: 'https://somafm.com/img3/groovesalad-400.jpg' },
-                { value: 'https://ice1.somafm.com/darkzone-128-mp3', track: 'The Dark Zone', station: 'SomaFM · Ambient', img: 'https://somafm.com/logos/400/darkzone400.jpg' },
-                { value: 'https://ice1.somafm.com/defcon-128-mp3', track: 'Def Con Radio', station: 'SomaFM · Dark Ambient', img: 'https://somafm.com/logos/400/defcon400.png' },
-                { value: 'https://ice1.somafm.com/metal-128-mp3', track: 'Metal Detector', station: 'SomaFM · Heavy Metal', img: 'https://somafm.com/logos/400/metal400.png' },
-                { value: 'https://ice1.somafm.com/u80s-128-mp3', track: 'Underground 80s', station: 'SomaFM · 80s Underground', img: 'https://somafm.com/img3/u80s-400.jpg' },
-                { value: 'https://ice1.somafm.com/7soul-128-mp3', track: 'Seven Inch Soul', station: 'SomaFM · Soul Classics', img: 'https://somafm.com/img3/7soul-400.jpg' },
-                { value: 'https://ice1.somafm.com/insound-128-mp3', track: 'The In-Sound', station: 'SomaFM · 60s Garage', img: 'https://somafm.com/logos/400/insound-400.jpg' },
-                { value: 'https://ice1.somafm.com/covers-128-mp3', track: 'Covers', station: 'SomaFM · Cover Versions', img: 'https://somafm.com/img3/covers-400.jpg' },
-                { value: 'https://ice1.somafm.com/sf1033-128-mp3', track: 'SF 10-33', station: 'SomaFM · Police Radio', img: 'https://somafm.com/img3/sf1033-400.jpg' },
-                { value: 'https://ice1.somafm.com/scanner-128-mp3', track: 'SF Police Scanner', station: 'SomaFM · Live Scanner', img: 'https://somafm.com/img3/scanner-400.jpg' },
-                { value: 'https://ice1.somafm.com/sfinsf-128-mp3', track: 'SF in SF', station: 'SomaFM · Live in SF', img: 'https://somafm.com/img3/sfinsf-400.jpg' },
-                { value: 'https://ice1.somafm.com/vaporwaves-128-mp3', track: 'Vaporwaves', station: 'SomaFM · Vaporwave', img: 'https://somafm.com/img3/vaporwaves-400.jpg' },
-                { value: 'https://ice1.somafm.com/doomed-128-mp3', track: 'Doomed', station: 'SomaFM · Doom Metal', img: 'https://somafm.com/img3/doomed-400.jpg' },
-                { value: 'https://ice1.somafm.com/beatblender-128-mp3', track: 'Beat Blender', station: 'SomaFM · Deep House', img: 'https://somafm.com/img3/beatblender-400.jpg' },
-                { value: 'https://ice1.somafm.com/bootliquor-128-mp3', track: 'Boot Liquor', station: 'SomaFM · Americana', img: 'https://somafm.com/img3/bootliquor-400.jpg' },
+                { value: 'https://ice1.somafm.com/groovesalad-128-mp3', track: 'Groove Salad', station: 'SomaFM · Chillout', img: 'https://somafm.com/logos/groovesalad-400.jpg' },
+                { value: 'https://ice1.somafm.com/darkzone-128-mp3', track: 'The Dark Zone', station: 'SomaFM · Ambient', img: 'https://somafm.com/logos/darkzone-400.jpg' },
+                { value: 'https://ice1.somafm.com/defcon-128-mp3', track: 'Def Con Radio', station: 'SomaFM · Dark Ambient', img: 'https://somafm.com/logos/defcon-400.jpg' },
+                { value: 'https://ice1.somafm.com/metal-128-mp3', track: 'Metal Detector', station: 'SomaFM · Heavy Metal', img: 'https://somafm.com/logos/metal-400.jpg' },
+                { value: 'https://ice1.somafm.com/u80s-128-mp3', track: 'Underground 80s', station: 'SomaFM · 80s Underground', img: 'https://somafm.com/logos/u80s-400.jpg' },
+                { value: 'https://ice1.somafm.com/7soul-128-mp3', track: 'Seven Inch Soul', station: 'SomaFM · Soul Classics', img: 'https://somafm.com/logos/7soul-400.jpg' },
+                { value: 'https://ice1.somafm.com/insound-128-mp3', track: 'The In-Sound', station: 'SomaFM · 60s Garage', img: 'https://somafm.com/logos/insound-400.jpg' },
+                { value: 'https://ice1.somafm.com/covers-128-mp3', track: 'Covers', station: 'SomaFM · Cover Versions', img: 'https://somafm.com/logos/covers-400.jpg' },
+                { value: 'https://ice1.somafm.com/sf1033-128-mp3', track: 'SF 10-33', station: 'SomaFM · Police Radio', img: 'https://somafm.com/logos/sf1033-400.jpg' },
+                { value: 'https://ice1.somafm.com/scanner-128-mp3', track: 'SF Police Scanner', station: 'SomaFM · Live Scanner', img: 'https://somafm.com/logos/scanner-400.jpg' },
+                { value: 'https://ice1.somafm.com/sfinsf-128-mp3', track: 'SF in SF', station: 'SomaFM · Live in SF', img: 'https://somafm.com/logos/sfinsf-400.jpg' },
+                { value: 'https://ice1.somafm.com/vaporwaves-128-mp3', track: 'Vaporwaves', station: 'SomaFM · Vaporwave', img: 'https://somafm.com/logos/vaporwaves-400.jpg' },
+                { value: 'https://ice1.somafm.com/doomed-128-mp3', track: 'Doomed', station: 'SomaFM · Doom Metal', img: 'https://somafm.com/logos/doomed-400.jpg' },
+                { value: 'https://ice1.somafm.com/beatblender-128-mp3', track: 'Beat Blender', station: 'SomaFM · Deep House', img: 'https://somafm.com/logos/beatblender-400.jpg' },
+                { value: 'https://ice1.somafm.com/bootliquor-128-mp3', track: 'Boot Liquor', station: 'SomaFM · Americana', img: 'https://somafm.com/logos/bootliquor-400.jpg' },
             ];
 
             const $ = (sel) => document.querySelector(sel);
@@ -549,11 +556,11 @@
             const playIcon = $('#playIcon');
             const prevBtn = $('#prevBtn');
             const nextBtn = $('#nextBtn');
-            const trackTitle = $('#trackTitle');
-            const trackArtist = $('#trackArtist');
             const volumeSlider = $('#volumeSlider');
             const audio = $('#audioPlayer');
             const sliderWrapper = $('#sliderWrapper');
+            const displayTrack = $('#displayTrack');
+            const displayArtist = $('#displayArtist');
 
             let currentIndex = 0;
             let isPlaying = false;
@@ -624,6 +631,14 @@
                 vinyl.classList.toggle('glow', active);
             }
 
+            function updateDisplay(index) {
+                const station = STATIONS[index];
+                if (station) {
+                    displayTrack.textContent = station.track;
+                    displayArtist.textContent = station.station;
+                }
+            }
+
             function switchToStation(index) {
                 if (isSwitching) return;
                 isSwitching = true;
@@ -636,6 +651,7 @@
 
                 currentIndex = index;
                 updateBackground(index);
+                updateDisplay(index);
 
                 audio.src = station.value;
                 audio.load();
@@ -643,17 +659,12 @@
                 if (isPlaying) {
                     audio.play()
                         .then(() => {
-                            trackTitle.textContent = station.track;
-                            trackTitle.className = 'track-title';
-                            trackArtist.textContent = station.station;
                             vinylDisc.style.animationPlayState = 'running';
                             setVinylGlow(true);
                             isSwitching = false;
                         })
                         .catch((e) => {
                             console.warn('Play error:', e.message);
-                            trackTitle.textContent = 'Stream unavailable';
-                            trackTitle.className = 'track-title loading';
                             isPlaying = false;
                             updatePlayButton(false);
                             vinylDisc.style.animationPlayState = 'paused';
@@ -661,9 +672,6 @@
                             isSwitching = false;
                         });
                 } else {
-                    trackTitle.textContent = station.track;
-                    trackTitle.className = 'track-title';
-                    trackArtist.textContent = station.station;
                     isSwitching = false;
                 }
             }
@@ -686,9 +694,6 @@
                                 updatePlayButton(true);
                                 vinylDisc.style.animationPlayState = 'running';
                                 setVinylGlow(true);
-                                trackTitle.textContent = station.track;
-                                trackTitle.className = 'track-title';
-                                trackArtist.textContent = station.station;
                             })
                             .catch((e) => {
                                 console.warn('Play error:', e.message);
@@ -702,14 +707,9 @@
                                 updatePlayButton(true);
                                 vinylDisc.style.animationPlayState = 'running';
                                 setVinylGlow(true);
-                                trackTitle.textContent = station.track;
-                                trackTitle.className = 'track-title';
-                                trackArtist.textContent = station.station;
                             })
                             .catch((e) => {
                                 console.warn('Play error:', e.message);
-                                trackTitle.textContent = 'Stream unavailable';
-                                trackTitle.className = 'track-title loading';
                                 isPlaying = false;
                                 updatePlayButton(false);
                                 vinylDisc.style.animationPlayState = 'paused';
@@ -737,9 +737,7 @@
             function init() {
                 buildSlider();
                 updateBackground(0);
-                trackTitle.textContent = STATIONS[0].track;
-                trackTitle.className = 'track-title';
-                trackArtist.textContent = STATIONS[0].station;
+                updateDisplay(0);
                 updatePlayButton(false);
 
                 setTimeout(() => {
@@ -757,8 +755,6 @@
                 });
 
                 audio.addEventListener('error', () => {
-                    trackTitle.textContent = 'Stream Error';
-                    trackTitle.className = 'track-title loading';
                     isPlaying = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
