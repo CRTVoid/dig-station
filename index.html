@@ -168,11 +168,12 @@
             overflow: visible;
         }
 
-        .vinyl-disc svg {
+        .vinyl-disc img {
             width: 100%;
             height: 100%;
             display: block;
             border-radius: 50%;
+            object-fit: contain;
         }
 
         @keyframes spin {
@@ -362,48 +363,7 @@
         <section class="vinyl-container">
             <div class="vinyl" id="vinyl">
                 <div class="vinyl-disc" id="vinylDisc">
-                    <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Тёмный фон пластинки -->
-                        <circle cx="200" cy="200" r="190" fill="#1a1a1a"/>
-                        
-                        <!-- Концентрические круги (дорожки) -->
-                        <circle cx="200" cy="200" r="185" fill="none" stroke="#222" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="175" fill="none" stroke="#222" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="165" fill="none" stroke="#2a2a2a" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="155" fill="none" stroke="#222" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="145" fill="none" stroke="#2a2a2a" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="135" fill="none" stroke="#222" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="125" fill="none" stroke="#2a2a2a" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="115" fill="none" stroke="#222" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="105" fill="none" stroke="#2a2a2a" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="95" fill="none" stroke="#222" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="85" fill="none" stroke="#2a2a2a" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="75" fill="none" stroke="#222" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="65" fill="none" stroke="#2a2a2a" stroke-width="0.5"/>
-                        
-                        <!-- Отражение / блик -->
-                        <path d="M 60 140 A 190 190 0 0 1 310 100 A 180 180 0 0 0 70 160 Z" fill="rgba(255,255,255,0.04)"/>
-                        <path d="M 340 300 A 190 190 0 0 1 120 340 A 170 170 0 0 0 330 280 Z" fill="rgba(255,255,255,0.03)"/>
-                        
-                        <!-- Центральный круг (красный/оранжевый) -->
-                        <circle cx="200" cy="200" r="55" fill="#c4161c"/>
-                        
-                        <!-- Внутренний круг -->
-                        <circle cx="200" cy="200" r="45" fill="none" stroke="#9e0b0f" stroke-width="2"/>
-                        
-                        <!-- Центральное отверстие -->
-                        <circle cx="200" cy="200" r="25" fill="#1a1a1a"/>
-                        <circle cx="200" cy="200" r="18" fill="#0d0d0d" stroke="#333" stroke-width="0.5"/>
-                        <circle cx="200" cy="200" r="10" fill="#1a1a1a"/>
-                        <circle cx="200" cy="200" r="5" fill="#c4161c" opacity="0.3"/>
-                        
-                        <!-- Буква в центре -->
-                        <text x="200" y="208" font-size="18" fill="rgba(255,255,255,0.6)" text-anchor="middle" font-family="Inter, sans-serif" font-weight="700" letter-spacing="1">S</text>
-                        <text x="200" y="223" font-size="11" fill="rgba(255,255,255,0.3)" text-anchor="middle" font-family="Inter, sans-serif" font-weight="300" letter-spacing="2">FM</text>
-                        
-                        <!-- Внешняя обводка -->
-                        <circle cx="200" cy="200" r="190" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-                    </svg>
+                    <img src="vinyl.svg" alt="Vinyl Record">
                 </div>
             </div>
         </section>
