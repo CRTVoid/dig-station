@@ -46,7 +46,6 @@
             position: relative;
         }
 
-        /* ===== SLIDER (Swiper) ===== */
         .slider-container {
             flex-shrink: 0;
             height: 80px;
@@ -103,7 +102,6 @@
             transition-duration: 0.05s;
         }
 
-        /* ===== VINYL ===== */
         .vinyl-container {
             flex: 1;
             display: flex;
@@ -124,7 +122,6 @@
             box-shadow: 0 0 80px rgba(255,255,255,0.02), inset 0 0 60px rgba(0,0,0,0.5);
         }
 
-        /* ===== МЕРЦАНИЕ ===== */
         .vinyl::before {
             content: '';
             position: absolute;
@@ -233,7 +230,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ===== CONTROLS ===== */
         .controls {
             display: flex;
             justify-content: center;
@@ -293,7 +289,6 @@
             font-size: 0.9rem;
         }
 
-        /* ===== TRACK INFO ===== */
         .track-info {
             flex-shrink: 0;
             text-align: center;
@@ -331,7 +326,6 @@
             50% { opacity: 0.6; }
         }
 
-        /* ===== VOLUME ===== */
         .volume-container {
             position: absolute;
             right: 12px;
@@ -386,7 +380,6 @@
             cursor: pointer;
         }
 
-        /* ===== RESPONSIVE ===== */
         @media (max-width: 420px) {
             #app { padding: 16px 16px 16px; }
             .slider-container { height: 64px; margin: 4px 0 12px; }
@@ -473,7 +466,6 @@
         (function() {
             'use strict';
 
-            // === СТАНЦИИ (из dash.html, без Left Coast 70s) ===
             const STATIONS = [
                 { value: 'https://ice1.somafm.com/groovesalad-128-mp3', track: 'Groove Salad', station: 'SomaFM · Chillout' },
                 { value: 'https://ice1.somafm.com/darkzone-128-mp3', track: 'The Dark Zone', station: 'SomaFM · Ambient' },
@@ -492,8 +484,6 @@
             ];
 
             const $ = (sel) => document.querySelector(sel);
-            const $$ = (sel) => document.querySelectorAll(sel);
-
             const app = $('#app');
             const vinyl = $('#vinyl');
             const vinylDisc = $('#vinylDisc');
@@ -512,8 +502,9 @@
             let isPlaying = false;
             let isStopped = false;
             let swiper = null;
+            let isLoading = false; // флаг загрузки
 
-            // ---------- ПОСТРОЕНИЕ СЛАЙДЕРА (Swiper) ----------
+            // ---------- ПОСТРОЕНИЕ СЛАЙДЕРА ----------
             function buildSlider() {
                 sliderWrapper.innerHTML = '';
                 STATIONS.forEach((station, index) => {
@@ -524,7 +515,6 @@
                     sliderWrapper.appendChild(slide);
                 });
 
-                // Инициализация Swiper
                 swiper = new Swiper('#stationSwiper', {
                     slidesPerView: 3,
                     centeredSlides: true,
@@ -535,16 +525,13 @@
                     on: {
                         slideChange: function() {
                             const realIndex = this.realIndex;
-                            const station = STATIONS[realIndex];
-                            if (station) {
-                                currentIndex = realIndex;
-                                loadStation(realIndex);
+                            if (realIndex !== currentIndex) {
+                                switchToStation(realIndex);
                             }
                         }
                     }
                 });
 
-                // При клике на слайд — переключаемся
                 document.querySelectorAll('.swiper-slide').forEach((slide) => {
                     slide.addEventListener('click', function() {
                         const index = parseInt(this.dataset.index);
@@ -558,20 +545,13 @@
             // ---------- ФОН ----------
             function updateBackground(index) {
                 const colors = [
-                    ['#3a1a3a', '#0a0a0a'], // Groove Salad
-                    ['#1a0a1a', '#000000'], // Dark Zone
-                    ['#0a3a1a', '#0a0a0a'], // Def Con
-                    ['#3a1a0a', '#0a0a0a'], // Metal Detector
-                    ['#2a1a3a', '#0a0a0a'], // Underground 80s
-                    ['#1a2a3a', '#0a0a0a'], // Seven Inch Soul
-                    ['#1a3a2a', '#0a0a0a'], // The In-Sound
-                    ['#2a3a1a', '#0a0a0a'], // Covers
-                    ['#1a1a1a', '#0a0a0a'], // SF 10-33
-                    ['#0a0a2a', '#0a0a0a'], // SF Police
-                    ['#1a1a2a', '#0a0a0a'], // SF in SF
-                    ['#1a0a2a', '#0a0a0a'], // Vaporwaves
-                    ['#2a0a0a', '#0a0a0a'], // Doomed
-                    ['#2a0a3a', '#0a0a0a'], // Beat Blender
+                    ['#3a1a3a', '#0a0a0a'], ['#1a0a1a', '#000000'],
+                    ['#0a3a1a', '#0a0a0a'], ['#3a1a0a', '#0a0a0a'],
+                    ['#2a1a3a', '#0a0a0a'], ['#1a2a3a', '#0a0a0a'],
+                    ['#1a3a2a', '#0a0a0a'], ['#2a3a1a', '#0a0a0a'],
+                    ['#1a1a1a', '#0a0a0a'], ['#0a0a2a', '#0a0a0a'],
+                    ['#1a1a2a', '#0a0a0a'], ['#1a0a2a', '#0a0a0a'],
+                    ['#2a0a0a', '#0a0a0a'], ['#2a0a3a', '#0a0a0a'],
                 ];
                 const c = colors[index % colors.length];
                 if (c) {
@@ -579,12 +559,12 @@
                 }
             }
 
-            // ---------- МЕРЦАНИЕ ВИНИЛА ----------
+            // ---------- МЕРЦАНИЕ ----------
             function setVinylGlow(active) {
                 vinyl.classList.toggle('glow', active);
             }
 
-            // ---------- АУДИО ----------
+            // ---------- ЗАГРУЗКА СТАНЦИИ ----------
             function loadStation(index) {
                 const station = STATIONS[index];
                 if (!station) return;
@@ -595,32 +575,114 @@
                 trackTitle.textContent = 'Loading...';
                 trackTitle.className = 'track-title loading';
                 trackArtist.textContent = station.station;
+                isLoading = true;
             }
 
-            function play() {
-                if (isStopped) {
-                    audio.currentTime = 0;
-                    isStopped = false;
+            // ---------- ВОСПРОИЗВЕДЕНИЕ С ОЖИДАНИЕМ ЗАГРУЗКИ ----------
+            function playStation(index) {
+                if (isLoading) return; // защита от повторных вызовов
+
+                const station = STATIONS[index];
+                if (!station) return;
+
+                // Если уже играет та же станция — ничего не делаем
+                if (audio.src === station.value && isPlaying) return;
+
+                // Если это та же станция, но на паузе — просто играем
+                if (audio.src === station.value && !isPlaying) {
+                    audio.play().catch(() => {});
+                    return;
                 }
-                audio.play()
-                    .then(() => {
-                        isPlaying = true;
-                        updatePlayButton(true);
-                        vinylDisc.style.animationPlayState = 'running';
-                        setVinylGlow(true);
-                        trackTitle.textContent = STATIONS[currentIndex].track;
-                        trackTitle.className = 'track-title';
-                        trackArtist.textContent = STATIONS[currentIndex].station;
-                    })
-                    .catch((e) => {
-                        console.warn('Play error:', e.message);
-                        trackTitle.textContent = 'Stream unavailable';
+
+                // Новая станция
+                loadStation(index);
+
+                // Ждём, пока аудио загрузится
+                const playAfterLoad = () => {
+                    audio.removeEventListener('canplay', playAfterLoad);
+                    audio.removeEventListener('loadedmetadata', playAfterLoad);
+                    isLoading = false;
+                    
+                    audio.play()
+                        .then(() => {
+                            isPlaying = true;
+                            updatePlayButton(true);
+                            vinylDisc.style.animationPlayState = 'running';
+                            setVinylGlow(true);
+                            trackTitle.textContent = STATIONS[currentIndex].track;
+                            trackTitle.className = 'track-title';
+                            trackArtist.textContent = STATIONS[currentIndex].station;
+                        })
+                        .catch((e) => {
+                            console.warn('Play error:', e.message);
+                            trackTitle.textContent = 'Stream unavailable';
+                            trackTitle.className = 'track-title loading';
+                            isPlaying = false;
+                            updatePlayButton(false);
+                            vinylDisc.style.animationPlayState = 'paused';
+                            setVinylGlow(false);
+                            isLoading = false;
+                        });
+                };
+
+                audio.addEventListener('canplay', playAfterLoad);
+                audio.addEventListener('loadedmetadata', playAfterLoad);
+
+                // Таймаут на случай, если поток не грузится
+                setTimeout(() => {
+                    if (isLoading) {
+                        audio.removeEventListener('canplay', playAfterLoad);
+                        audio.removeEventListener('loadedmetadata', playAfterLoad);
+                        isLoading = false;
+                        trackTitle.textContent = 'Stream timeout';
                         trackTitle.className = 'track-title loading';
                         isPlaying = false;
                         updatePlayButton(false);
                         vinylDisc.style.animationPlayState = 'paused';
                         setVinylGlow(false);
-                    });
+                    }
+                }, 15000);
+            }
+
+            // ---------- ПЕРЕКЛЮЧЕНИЕ СТАНЦИИ (вызывается из Swiper) ----------
+            function switchToStation(index) {
+                if (index === currentIndex && isPlaying) return;
+                
+                const wasPlaying = isPlaying;
+                
+                // Останавливаем текущее воспроизведение
+                if (wasPlaying) {
+                    audio.pause();
+                    setVinylGlow(false);
+                    isPlaying = false;
+                    updatePlayButton(false);
+                    vinylDisc.style.animationPlayState = 'paused';
+                }
+                
+                // Загружаем и играем новую станцию
+                if (wasPlaying) {
+                    playStation(index);
+                } else {
+                    // Просто загружаем, но не играем
+                    loadStation(index);
+                    trackTitle.textContent = 'Stopped';
+                    trackTitle.className = 'track-title';
+                    trackArtist.textContent = STATIONS[index].station;
+                }
+            }
+
+            // ---------- PLAY/PAUSE ----------
+            function togglePlay() {
+                if (isPlaying) {
+                    pause();
+                } else {
+                    // Если есть src — играем
+                    if (audio.src) {
+                        playStation(currentIndex);
+                    } else {
+                        playStation(0);
+                    }
+                }
             }
 
             function pause() {
@@ -629,6 +691,8 @@
                 updatePlayButton(false);
                 vinylDisc.style.animationPlayState = 'paused';
                 setVinylGlow(false);
+                // Останавливаем таймаут загрузки, если был
+                isLoading = false;
             }
 
             function stop() {
@@ -638,12 +702,10 @@
                 trackTitle.textContent = 'Stopped';
                 trackTitle.className = 'track-title';
                 trackArtist.textContent = STATIONS[currentIndex].station;
+                // Не удаляем src, чтобы можно было перезапустить
             }
 
-            function togglePlay() {
-                isPlaying ? pause() : play();
-            }
-
+            // ---------- КНОПКИ PREV/NEXT ----------
             function switchStation(direction) {
                 if (!swiper) return;
                 direction === 1 ? swiper.slideNext() : swiper.slidePrev();
@@ -666,7 +728,6 @@
                 loadStation(0);
                 updatePlayButton(false);
 
-                // Ждём, пока Swiper инициализируется
                 setTimeout(() => {
                     if (swiper) {
                         swiper.slideToLoop(0, 0);
@@ -686,6 +747,7 @@
                     trackTitle.textContent = 'Stream Error';
                     trackTitle.className = 'track-title loading';
                     isPlaying = false;
+                    isLoading = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
                     setVinylGlow(false);
