@@ -4,8 +4,8 @@ const URLS = [
   '/index.html',
   '/vinyl.svg',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/192x192.png',
+  '/512x512.png'
 ];
 
 self.addEventListener('install', (e) => {
