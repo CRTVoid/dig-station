@@ -450,22 +450,42 @@
             });
 
             swiper = new Swiper('#stationSwiper', {
-                slidesPerView: 7,
-                centeredSlides: true,
-                loop: true,
-                speed: 500,
-                spaceBetween: 2,
-                allowTouchMove: true,
-                watchSlidesProgress: true,
-                on: {
-                    slideChange: function() {
-                        const realIndex = this.realIndex;
-                        if (realIndex !== currentIndex) {
-                            switchToStation(realIndex);
-                        }
-                    }
-                }
-            });
+    slidesPerView: 7,           // По умолчанию для ПК
+    centeredSlides: true,
+    loop: true,
+    spaceBetween: 4,
+    speed: 500,
+    allowTouchMove: true,
+    watchSlidesProgress: true,
+    
+    // ===== АДАПТИВНОСТЬ =====
+    breakpoints: {
+        // Когда ширина экрана >= 1024px — показываем 7
+        1024: {
+            slidesPerView: 7,
+            spaceBetween: 6
+        },
+        // Когда ширина экрана >= 768px (планшеты) — показываем 5
+        768: {
+            slidesPerView: 5,
+            spaceBetween: 4
+        },
+        // Когда ширина экрана < 768px (телефоны) — показываем 5 (или 3)
+        0: {
+            slidesPerView: 5,
+            spaceBetween: 2
+        }
+    },
+    
+    on: {
+        slideChange: function() {
+            const realIndex = this.realIndex;
+            if (realIndex !== currentIndex) {
+                switchToStation(realIndex);
+            }
+        }
+    }
+});
 
             document.querySelectorAll('.swiper-slide').forEach((slide) => {
                 slide.addEventListener('click', function() {
