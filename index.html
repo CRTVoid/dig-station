@@ -435,48 +435,6 @@
         let swiper = null;
         let isSwitching = false;
 
-        // ---------- WEB AUDIO API (ГРОМКОСТЬ) ----------
-        let audioContext = null;
-        let gainNode = null;
-        let isAudioContextReady = false;
-
-        function initAudioContext() {
-            if (isAudioContextReady) return;
-            
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                // Создаём источник из HTMLAudioElement
-                const source = audioContext.createMediaElementSource(audio);
-                gainNode = audioContext.createGain();
-                
-                // Соединяем: аудио -> регулятор громкости -> колонки
-                source.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                // Устанавливаем текущую громкость
-                gainNode.gain.value = parseFloat(volumeSlider.value);
-                
-                isAudioContextReady = true;
-                console.log('AudioContext инициализирован');
-            } catch (e) {
-                console.warn('Web Audio API не поддерживается, используем fallback:', e);
-                // Если Web Audio не работает — используем обычный volume
-                isAudioContextReady = false;
-            }
-        }
-
-        function setVolume(value) {
-            const val = parseFloat(value);
-            if (gainNode && isAudioContextReady) {
-                gainNode.gain.value = val;
-            } else {
-                // Fallback для старых браузеров / ПК
-                audio.volume = val;
-            }
-        }
-
-        // ---------- ОСТАЛЬНАЯ ЛОГИКА ----------
-
         function buildSlider() {
             sliderWrapper.innerHTML = '';
             STATIONS.forEach((station, index) => {
@@ -497,7 +455,6 @@
                 slidesPerView: 3,
                 centeredSlides: true,
                 loop: true,
-                spaceBetween: 8,
                 speed: 500,
                 allowTouchMove: true,
                 watchSlidesProgress: true,
@@ -560,16 +517,10 @@
             updateBackground(index);
             updateDisplay(index);
 
-            // Меняем поток
             audio.src = station.value;
             audio.load();
 
             if (isPlaying) {
-                // Если AudioContext ещё не инициализирован — инициализируем
-                if (!isAudioContextReady) {
-                    initAudioContext();
-                }
-                
                 audio.play()
                     .then(() => {
                         vinylDisc.style.animationPlayState = 'running';
@@ -593,18 +544,11 @@
                 isPlaying = false;
                 updatePlayButton(false);
                 vinylDisc.style.animationPlayState = 'paused';
-                // Не останавливаем AudioContext, чтобы громкость сохранилась
             } else {
-                // Инициализируем AudioContext при первом воспроизведении
-                if (!isAudioContextReady) {
-                    initAudioContext();
-                }
-
                 const station = STATIONS[currentIndex];
                 if (!station) return;
 
-                // Если источник уже установлен
-                if (audio.src) {
+                if (audio.src && audio.src === station.value) {
                     audio.play()
                         .then(() => {
                             isPlaying = true;
@@ -615,7 +559,6 @@
                             console.warn('Play error:', e.message);
                         });
                 } else {
-                    // Первый запуск — устанавливаем поток
                     audio.src = station.value;
                     audio.load();
                     audio.play()
@@ -655,7 +598,7 @@
             updateDisplay(0);
             updatePlayButton(false);
 
-            // Устанавливаем начальную громкость (пока через fallback)
+            // Простая громкость (работает на ПК и Android)
             audio.volume = parseFloat(volumeSlider.value);
 
             setTimeout(() => {
@@ -668,18 +611,9 @@
             prevBtn.addEventListener('click', () => switchStation(-1));
             nextBtn.addEventListener('click', () => switchStation(1));
 
-            // Управление громкостью
             volumeSlider.addEventListener('input', (e) => {
-                const val = e.target.value;
-                setVolume(val);
+                audio.volume = parseFloat(e.target.value);
             });
-
-            // Если на iOS / Safari, нужно разбудить AudioContext при касании
-            document.addEventListener('touchstart', () => {
-                if (audioContext && audioContext.state === 'suspended') {
-                    audioContext.resume();
-                }
-            }, { passive: true });
 
             audio.addEventListener('error', () => {
                 isPlaying = false;
