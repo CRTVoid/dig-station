@@ -49,7 +49,7 @@
         .slider-container {
             flex-shrink: 0;
             height: 90px;
-            margin: 0 0 4px 0;
+            margin: 8px 0 4px 0;
             position: relative;
             overflow: hidden;
             background: transparent;
@@ -121,7 +121,7 @@
         .station-name-display {
             flex-shrink: 0;
             text-align: center;
-            padding: 2px 0 8px 0;
+            padding: 6px 0 8px 0;
             min-height: 28px;
         }
 
@@ -160,45 +160,6 @@
             box-shadow: none;
         }
 
-        .vinyl::before {
-            content: '';
-            position: absolute;
-            inset: -6px;
-            border-radius: 50%;
-            padding: 4px;
-            background: conic-gradient(
-                from 0deg,
-                rgba(255,255,255,0.01),
-                rgba(255,255,255,0.06),
-                rgba(255,255,255,0.01),
-                rgba(255,255,255,0.10),
-                rgba(255,255,255,0.01),
-                rgba(255,255,255,0.04),
-                rgba(255,255,255,0.01)
-            );
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            opacity: 0;
-            transition: opacity 2s ease;
-            animation: glowPulse 5s ease-in-out infinite;
-            animation-play-state: paused;
-            filter: blur(3px);
-        }
-
-        .vinyl.glow::before {
-            opacity: 1;
-            animation-play-state: running;
-        }
-
-        @keyframes glowPulse {
-            0% { opacity: 0.2; transform: scale(1); }
-            25% { opacity: 0.8; transform: scale(1.015); }
-            50% { opacity: 0.3; transform: scale(0.99); }
-            75% { opacity: 0.6; transform: scale(1.008); }
-            100% { opacity: 0.2; transform: scale(1); }
-        }
-
         .vinyl-disc {
             width: 100%;
             height: 100%;
@@ -206,13 +167,15 @@
             position: relative;
             animation: spin 8s linear infinite;
             animation-play-state: paused;
+            background: transparent;
         }
 
-        .vinyl-disc svg {
+        .vinyl-disc img {
             width: 100%;
             height: 100%;
             border-radius: 50%;
             display: block;
+            object-fit: cover;
         }
 
         .vinyl-center {
@@ -245,40 +208,22 @@
             to { transform: rotate(360deg); }
         }
 
-        .vinyl-shadow {
-            position: absolute;
-            top: -8%;
-            left: -8%;
-            width: 116%;
-            height: 116%;
-            border-radius: 50%;
-            background: radial-gradient(ellipse at center, rgba(249,115,22,0.15) 0%, transparent 70%);
-            opacity: 0;
-            filter: blur(20px);
-            transition: opacity 0.6s ease;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .vinyl.glow .vinyl-shadow {
-            opacity: 1;
-        }
-
-        /* ===== CONTROLS (увеличены на 10%) ===== */
+        /* ===== CONTROLS (уменьшены на 10%, подняты на 15%) ===== */
         .controls {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 22px;
+            gap: 18px;
             flex-shrink: 0;
-            padding: 8px 0 4px 0;
+            padding: 4px 0 4px 0;
+            margin-top: -6px;
         }
 
         .btn {
             background: none;
             border: none;
             color: #fff;
-            padding: 10px;
+            padding: 8px;
             cursor: pointer;
             opacity: 0.3;
             transition: all 0.3s ease;
@@ -287,9 +232,9 @@
             justify-content: center;
             touch-action: manipulation;
             border-radius: 50%;
-            width: 52px;
-            height: 52px;
-            font-size: 1.3rem;
+            width: 44px;
+            height: 44px;
+            font-size: 1.1rem;
         }
 
         .btn:active {
@@ -298,14 +243,14 @@
         }
 
         .btn-play {
-            width: 80px;
-            height: 80px;
+            width: 68px;
+            height: 68px;
             border-radius: 50%;
             background: rgba(255,255,255,0.06);
             border: 1px solid rgba(255,255,255,0.08);
             opacity: 1;
             padding: 0;
-            font-size: 2.0rem;
+            font-size: 1.7rem;
         }
 
         .btn-play:active {
@@ -319,14 +264,10 @@
 
         .btn-prev,
         .btn-next {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
         }
 
-        /* ===== TRACK INFO (скрыто, используем station-name-display) ===== */
-        .track-info {
-            display: none;
-        }
-
+        /* ===== VOLUME ===== */
         .volume-container {
             position: absolute;
             right: 12px;
@@ -383,17 +324,19 @@
 
         @media (max-width: 420px) {
             #app { padding: 16px 16px 16px; }
-            .slider-container { height: 72px; margin: 0; }
+            .slider-container { height: 72px; margin: 4px 0 2px 0; }
             .slider-container .swiper-slide img { width: 44px; height: 44px; }
             .slider-container .swiper-slide-active img { width: 60px; height: 60px; }
             .slider-container .swiper-slide-prev img,
             .slider-container .swiper-slide-next img { width: 36px; height: 36px; }
+            .station-name-display { padding: 4px 0 6px 0; }
             .station-name-display .track { font-size: 13px; }
             .station-name-display .artist { font-size: 11px; }
             .vinyl { width: 220px; height: 220px; max-width: 60vw; max-height: 60vw; }
-            .btn { width: 44px; height: 44px; padding: 6px; font-size: 1.1rem; }
-            .btn-play { width: 66px; height: 66px; font-size: 1.6rem; }
-            .btn-prev, .btn-next { font-size: 1.3rem; }
+            .controls { gap: 14px; padding: 2px 0 2px 0; margin-top: -4px; }
+            .btn { width: 36px; height: 36px; padding: 5px; font-size: 0.9rem; }
+            .btn-play { width: 56px; height: 56px; font-size: 1.4rem; }
+            .btn-prev, .btn-next { font-size: 1.1rem; }
             .volume-container { right: 6px; height: 120px; opacity: 0.12; }
             .volume-slider { width: 80px; }
         }
@@ -407,9 +350,10 @@
             .station-name-display .track { font-size: 12px; }
             .station-name-display .artist { font-size: 10px; }
             .vinyl { width: 160px; height: 160px; max-width: 50vw; max-height: 50vw; }
-            .btn { width: 38px; height: 38px; font-size: 0.9rem; }
-            .btn-play { width: 56px; height: 56px; font-size: 1.3rem; }
-            .btn-prev, .btn-next { font-size: 1.1rem; }
+            .controls { gap: 10px; }
+            .btn { width: 32px; height: 32px; font-size: 0.8rem; }
+            .btn-play { width: 48px; height: 48px; font-size: 1.2rem; }
+            .btn-prev, .btn-next { font-size: 0.9rem; }
         }
 
         @supports (padding: max(0px)) {
@@ -441,57 +385,8 @@
         <section class="vinyl-container">
             <div class="vinyl" id="vinyl">
                 <div class="vinyl-disc" id="vinylDisc">
-                    <svg viewBox="0 0 120 120">
-                        <defs>
-                            <radialGradient id="vinylGrad" cx="50%" cy="50%" r="50%">
-                                <stop offset="0%" stop-color="#1a1a1a"/>
-                                <stop offset="15%" stop-color="#0d0d0d"/>
-                                <stop offset="30%" stop-color="#1a1a1a"/>
-                                <stop offset="45%" stop-color="#0d0d0d"/>
-                                <stop offset="60%" stop-color="#1a1a1a"/>
-                                <stop offset="75%" stop-color="#0d0d0d"/>
-                                <stop offset="90%" stop-color="#1a1a1a"/>
-                                <stop offset="100%" stop-color="#0d0d0d"/>
-                            </radialGradient>
-                            <radialGradient id="shine1" cx="65%" cy="30%" r="35%">
-                                <stop offset="0%" stop-color="rgba(255,255,255,0.15)"/>
-                                <stop offset="60%" stop-color="rgba(255,255,255,0.04)"/>
-                                <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-                            </radialGradient>
-                            <radialGradient id="shine2" cx="85%" cy="75%" r="25%">
-                                <stop offset="0%" stop-color="rgba(255,255,255,0.07)"/>
-                                <stop offset="70%" stop-color="rgba(255,255,255,0.02)"/>
-                                <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-                            </radialGradient>
-                            <radialGradient id="labelGrad" cx="50%" cy="50%" r="50%">
-                                <stop offset="0%" stop-color="#f97316"/>
-                                <stop offset="100%" stop-color="#f97316" stop-opacity="0.7"/>
-                            </radialGradient>
-                        </defs>
-                        <circle cx="60" cy="60" r="56" fill="url(#vinylGrad)" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
-                        <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
-                        <circle cx="60" cy="60" r="49" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.2"/>
-                        <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
-                        <circle cx="60" cy="60" r="43" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.2"/>
-                        <circle cx="60" cy="60" r="40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
-                        <circle cx="60" cy="60" r="37" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.2"/>
-                        <circle cx="60" cy="60" r="34" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
-                        <circle cx="60" cy="60" r="31" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.2"/>
-                        <circle cx="60" cy="60" r="28" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
-                        <circle cx="60" cy="60" r="25" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.2"/>
-                        <circle cx="60" cy="60" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.3"/>
-                        <circle cx="60" cy="60" r="56" fill="url(#shine1)"/>
-                        <circle cx="60" cy="60" r="56" fill="url(#shine2)"/>
-                        <circle cx="60" cy="60" r="18" fill="url(#labelGrad)" opacity="0.9"/>
-                        <circle cx="60" cy="60" r="14" fill="#0a0a0a" opacity="0.12"/>
-                        <circle cx="60" cy="60" r="8" fill="#0a0a0a" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
-                        <circle cx="60" cy="60" r="4" fill="#0d0d0d"/>
-                        <circle cx="60" cy="60" r="2" fill="#f97316" opacity="0.3"/>
-                        <text x="60" y="53" font-size="5" fill="rgba(255,255,255,0.7)" text-anchor="middle" font-weight="700" letter-spacing="0.5">S</text>
-                        <text x="60" y="63" font-size="3.5" fill="rgba(255,255,255,0.5)" text-anchor="middle" font-weight="300">FM</text>
-                    </svg>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Black_vinyl_record_on_white_background.jpg/512px-Black_vinyl_record_on_white_background.jpg" alt="Vinyl">
                 </div>
-                <div class="vinyl-shadow"></div>
                 <div class="vinyl-center"></div>
             </div>
         </section>
@@ -508,12 +403,6 @@
                 <i class="fas fa-step-forward"></i>
             </button>
         </section>
-
-        <!-- Скрытый трек-инфо (для совместимости) -->
-        <footer class="track-info">
-            <div class="track-title loading" id="trackTitle">Connecting</div>
-            <div class="track-artist" id="trackArtist">Radio</div>
-        </footer>
 
         <!-- Громкость -->
         <div class="volume-container">
@@ -550,7 +439,6 @@
 
             const $ = (sel) => document.querySelector(sel);
             const app = $('#app');
-            const vinyl = $('#vinyl');
             const vinylDisc = $('#vinylDisc');
             const playBtn = $('#playBtn');
             const playIcon = $('#playIcon');
@@ -627,10 +515,6 @@
                 }
             }
 
-            function setVinylGlow(active) {
-                vinyl.classList.toggle('glow', active);
-            }
-
             function updateDisplay(index) {
                 const station = STATIONS[index];
                 if (station) {
@@ -660,7 +544,6 @@
                     audio.play()
                         .then(() => {
                             vinylDisc.style.animationPlayState = 'running';
-                            setVinylGlow(true);
                             isSwitching = false;
                         })
                         .catch((e) => {
@@ -668,7 +551,6 @@
                             isPlaying = false;
                             updatePlayButton(false);
                             vinylDisc.style.animationPlayState = 'paused';
-                            setVinylGlow(false);
                             isSwitching = false;
                         });
                 } else {
@@ -682,7 +564,6 @@
                     isPlaying = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
-                    setVinylGlow(false);
                 } else {
                     const station = STATIONS[currentIndex];
                     if (!station) return;
@@ -693,7 +574,6 @@
                                 isPlaying = true;
                                 updatePlayButton(true);
                                 vinylDisc.style.animationPlayState = 'running';
-                                setVinylGlow(true);
                             })
                             .catch((e) => {
                                 console.warn('Play error:', e.message);
@@ -706,14 +586,12 @@
                                 isPlaying = true;
                                 updatePlayButton(true);
                                 vinylDisc.style.animationPlayState = 'running';
-                                setVinylGlow(true);
                             })
                             .catch((e) => {
                                 console.warn('Play error:', e.message);
                                 isPlaying = false;
                                 updatePlayButton(false);
                                 vinylDisc.style.animationPlayState = 'paused';
-                                setVinylGlow(false);
                             });
                     }
                 }
@@ -758,7 +636,6 @@
                     isPlaying = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
-                    setVinylGlow(false);
                 });
             }
 
