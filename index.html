@@ -65,9 +65,9 @@
 
         .signal-bar {
             width: 3px;
-            background: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.2);
             border-radius: 1px;
-            transition: height 0.3s ease;
+            transition: height 0.3s ease, background 0.3s ease;
         }
 
         .signal-bar:nth-child(1) { height: 4px; }
@@ -76,7 +76,7 @@
         .signal-bar:nth-child(4) { height: 14px; }
 
         .signal-bar.active {
-            background: rgba(255,255,255,0.9);
+            background: rgba(255,255,255,0.7);
         }
 
         /* ===== SLIDER ===== */
@@ -101,7 +101,7 @@
             flex: 0 0 auto;
             padding: 10px 18px;
             border-radius: 14px;
-            font-size: 17px;
+            font-size: 15px;
             font-weight: 700;
             letter-spacing: 0.5px;
             transition: all 0.4s ease;
@@ -114,7 +114,6 @@
             border: 1px solid rgba(255,255,255,0.04);
             cursor: pointer;
             touch-action: manipulation;
-            font-size: 15px;
             padding: 8px 14px;
         }
 
@@ -361,19 +360,22 @@
         }
 
         .volume-slider {
-            writing-mode: bt-lr;
-            -webkit-appearance: slider-vertical;
-            appearance: slider-vertical;
-            width: 3px;
-            height: 100px;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100px;
+            height: 3px;
             background: rgba(255,255,255,0.15);
             border-radius: 3px;
             outline: none;
             cursor: pointer;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            position: absolute;
         }
 
         .volume-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
+            appearance: none;
             width: 16px;
             height: 16px;
             border-radius: 50%;
@@ -474,7 +476,7 @@
             }
 
             .volume-slider {
-                height: 80px;
+                width: 80px;
             }
         }
 
@@ -558,7 +560,7 @@
         <!-- Громкость -->
         <div class="volume-container">
             <input type="range" class="volume-slider" id="volumeSlider" 
-                   min="0" max="1" step="0.01" value="0.8" orient="vertical">
+                   min="0" max="1" step="0.01" value="0.8">
         </div>
 
         <!-- Скрытое аудио -->
@@ -570,13 +572,13 @@
 
     <script>
         // ============================================================
-        //  RADIO PLAYER — полный код (ядро + UI)
+        //  RADIO PLAYER — ИСПРАВЛЕННАЯ ВЕРСИЯ
         // ============================================================
 
         (function() {
             'use strict';
 
-            // ---------- СТАНЦИИ ----------
+            // ---------- СТАНЦИИ (исправленные URL) ----------
             const STATIONS = [
                 { id: 'groovesalad',     name: 'Groove Salad',     stream: 'https://ice1.somafm.com/groovesalad-128-mp3',     colors: ['#3a1a3a', '#0a0a0a'] },
                 { id: 'spacestation',    name: 'Space Station',    stream: 'https://ice1.somafm.com/spacestation-128-mp3',   colors: ['#0a1a3a', '#0a0a0a'] },
@@ -585,16 +587,16 @@
                 { id: 'defcon',          name: 'DEF CON Radio',    stream: 'https://ice1.somafm.com/defcon-128-mp3',         colors: ['#0a3a1a', '#0a0a0a'] },
                 { id: 'underground80s',  name: 'Underground 80s',  stream: 'https://ice1.somafm.com/underground80s-128-mp3', colors: ['#2a1a3a', '#0a0a0a'] },
                 { id: 'bootliquor',      name: 'Boot Liquor',      stream: 'https://ice1.somafm.com/bootliquor-128-mp3',     colors: ['#3a2a0a', '#0a0a0a'] },
-                { id: 'sevensoul',       name: 'Seven Inch Soul',  stream: 'https://ice1.somafm.com/sevensoul-128-mp3',      colors: ['#1a2a3a', '#0a0a0a'] },
+                { id: 'sevensoul',       name: 'Seven Inch Soul',  stream: 'https://ice1.somafm.com/sevensoul-128-aac',      colors: ['#1a2a3a', '#0a0a0a'] },
                 { id: 'fluid',           name: 'Fluid',            stream: 'https://ice1.somafm.com/fluid-128-mp3',          colors: ['#0a2a2a', '#0a0a0a'] },
                 { id: 'secretagent',     name: 'Secret Agent',     stream: 'https://ice1.somafm.com/secretagent-128-mp3',    colors: ['#0a1a4a', '#0a0a0a'] },
                 { id: 'beatblender',     name: 'Beat Blender',     stream: 'https://ice1.somafm.com/beatblender-128-mp3',    colors: ['#2a0a3a', '#0a0a0a'] },
                 { id: 'sf1033',          name: 'SF 10-33',         stream: 'https://ice1.somafm.com/sf1033-128-mp3',         colors: ['#1a1a1a', '#0a0a0a'] },
                 { id: 'policescanner',   name: 'SF Police',        stream: 'https://ice1.somafm.com/policescanner-128-mp3',  colors: ['#0a0a2a', '#0a0a0a'] },
-                { id: 'blackrock',       name: 'Black Rock FM',    stream: 'https://ice1.somafm.com/blackrock-128-mp3',      colors: ['#2a1a0a', '#0a0a0a'] },
+                { id: 'blackrock',       name: 'Black Rock FM',    stream: 'https://ice1.somafm.com/blackrock-128-aac',      colors: ['#2a1a0a', '#0a0a0a'] },
                 { id: 'vaporwaves',      name: 'Vaporwaves',       stream: 'https://ice1.somafm.com/vaporwaves-128-mp3',     colors: ['#1a0a2a', '#0a0a0a'] },
                 { id: 'n5md',            name: 'n5MD Radio',       stream: 'https://ice1.somafm.com/n5md-128-mp3',           colors: ['#0a1a2a', '#0a0a0a'] },
-                { id: 'sfinSF',          name: 'SF in SF',         stream: 'https://ice1.somafm.com/sfinsf-128-mp3',         colors: ['#1a1a2a', '#0a0a0a'] }
+                { id: 'sfinsf',          name: 'SF in SF',         stream: 'https://ice1.somafm.com/sfinsf-128-mp3',         colors: ['#1a1a2a', '#0a0a0a'] }
             ];
 
             // ---------- DOM-ссылки ----------
@@ -603,7 +605,6 @@
 
             const app = $('#app');
             const slider = $('#slider');
-            const vinyl = $('#vinyl');
             const vinylDisc = $('#vinylDisc');
             const playBtn = $('#playBtn');
             const playIcon = $('#playIcon');
@@ -623,6 +624,7 @@
             let isStopped = false;
             let trackInterval = null;
             let interferenceTimeout = null;
+            let isTrackUpdaterActive = false;
 
             // ---------- ПОСТРОЕНИЕ СЛАЙДЕРА ----------
             function buildSlider() {
@@ -673,7 +675,6 @@
                 trackTitle.textContent = 'Connecting';
                 trackTitle.className = 'track-title loading';
                 trackArtist.textContent = station.name;
-                // Сброс индикатора сигнала
                 updateSignalIndicator(false);
             }
 
@@ -692,9 +693,13 @@
                         startTrackUpdater();
                     })
                     .catch((e) => {
-                        console.warn('Play error:', e);
+                        console.warn('Play error:', e.message);
                         trackTitle.textContent = 'Error';
                         trackTitle.className = 'track-title loading';
+                        isPlaying = false;
+                        updatePlayButton(false);
+                        vinylDisc.style.animationPlayState = 'paused';
+                        updateSignalIndicator(false);
                     });
             }
 
@@ -728,25 +733,17 @@
             function switchStation(direction) {
                 const total = STATIONS.length;
                 let newIndex = (currentIndex + direction + total) % total;
-                // Если direction === 0 — переключение по индексу
-                if (direction === 0) {
-                    // используется при клике по станции
-                }
-                // При клике по станции передаём индекс напрямую
-                if (typeof direction === 'number' && Math.abs(direction) > 1) {
-                    // handled separately
-                }
                 doSwitch(newIndex);
             }
 
             function doSwitch(newIndex) {
                 if (newIndex === currentIndex && isPlaying) return;
                 
-                // Эффект помех
                 triggerInterference(() => {
                     const wasPlaying = isPlaying;
                     if (wasPlaying) {
                         audio.pause();
+                        stopTrackUpdater();
                     }
                     loadStation(newIndex);
                     if (wasPlaying) {
@@ -761,14 +758,16 @@
                 });
             }
 
-            // ---------- ПЕРЕКЛЮЧЕНИЕ ПО ИНДЕКСУ (клик по слайдеру) ----------
             function goToStation(index) {
                 if (index === currentIndex) {
                     if (!isPlaying) togglePlay();
                     return;
                 }
                 const wasPlaying = isPlaying;
-                if (wasPlaying) audio.pause();
+                if (wasPlaying) {
+                    audio.pause();
+                    stopTrackUpdater();
+                }
                 triggerInterference(() => {
                     loadStation(index);
                     if (wasPlaying) {
@@ -803,14 +802,16 @@
                 }
             }
 
-            // ---------- ТРЕКИ (Soma FM API) ----------
+            // ---------- ТРЕКИ (без CORS — используем заголовки ICY) ----------
             function startTrackUpdater() {
                 stopTrackUpdater();
+                isTrackUpdaterActive = true;
                 trackInterval = setInterval(fetchTrack, 5000);
-                fetchTrack(); // сразу
+                fetchTrack();
             }
 
             function stopTrackUpdater() {
+                isTrackUpdaterActive = false;
                 if (trackInterval) {
                     clearInterval(trackInterval);
                     trackInterval = null;
@@ -818,15 +819,22 @@
             }
 
             async function fetchTrack() {
+                if (!isTrackUpdaterActive) return;
                 const station = STATIONS[currentIndex];
                 if (!station) return;
+
+                // Пытаемся получить метаданные через ICY заголовки
+                // Soma FM не отдают CORS, поэтому используем прокси
+                // или просто показываем название станции
                 try {
-                    const url = `https://api.somafm.com/songhistory/${station.id}`;
+                    // Используем публичный API Soma FM через прокси
+                    const url = `https://api.allorigins.win/get?url=${encodeURIComponent('https://api.somafm.com/songhistory/' + station.id)}`;
                     const resp = await fetch(url);
                     if (!resp.ok) throw new Error('API error');
                     const data = await resp.json();
-                    if (data && data.length > 0) {
-                        const last = data[0];
+                    const parsed = JSON.parse(data.contents);
+                    if (parsed && parsed.length > 0) {
+                        const last = parsed[0];
                         if (last.title && last.artist) {
                             trackTitle.textContent = last.title;
                             trackArtist.textContent = last.artist;
@@ -834,13 +842,14 @@
                             return;
                         }
                     }
-                    // Если данных нет — показываем станцию
-                    trackTitle.textContent = station.name;
-                    trackArtist.textContent = 'Now Playing';
-                    trackTitle.className = 'track-title';
                 } catch (e) {
-                    // Тишина — не спамим ошибками
+                    // Показываем название станции
                 }
+                
+                // Если API не работает — показываем только название станции
+                trackTitle.textContent = station.name;
+                trackArtist.textContent = 'Now Playing';
+                trackTitle.className = 'track-title';
             }
 
             // ---------- ПОМЕХИ ----------
@@ -850,7 +859,6 @@
                     interferenceTimeout = null;
                 }
                 interference.classList.add('active');
-                // Винил дёргается
                 vinylDisc.style.animationPlayState = 'paused';
                 vinylDisc.style.transform = 'rotate(' + (Math.random() * 10 - 5) + 'deg)';
                 
@@ -902,7 +910,8 @@
                 });
 
                 // Обработка ошибок аудио
-                audio.addEventListener('error', () => {
+                audio.addEventListener('error', (e) => {
+                    console.warn('Audio error:', e);
                     trackTitle.textContent = 'Stream Error';
                     trackTitle.className = 'track-title loading';
                     isPlaying = false;
@@ -912,13 +921,10 @@
                     stopTrackUpdater();
                 });
 
-                // Автоплей при загрузке (по требованию браузера)
-                // Не включаем автоматически — пользователь сам нажмёт Play
-                // Но можно попробовать, если нужно:
-                // play();
+                // Автоплей при загрузке НЕ включаем
+                // Пользователь сам нажимает Play
             }
 
-            // Запуск после загрузки DOM
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
             } else {
