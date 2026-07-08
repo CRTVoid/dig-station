@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a0a">
@@ -12,7 +11,6 @@
     <title>Radio Player</title>
     
     <style>
-        /* ===== RESET & BASE ===== */
         * {
             margin: 0;
             padding: 0;
@@ -35,54 +33,22 @@
             flex-direction: column;
             height: 100vh;
             height: 100dvh;
-            padding: 16px 20px 20px;
+            padding: 20px 20px 20px;
             background: radial-gradient(ellipse at 50% 30%, #1a1a2e, #0a0a0a);
-            transition: background 1.4s ease;
+            transition: background 1.8s ease;
             position: relative;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 0 12px;
-            font-size: 13px;
-            font-weight: 300;
-            letter-spacing: 1px;
-            opacity: 0.5;
-            flex-shrink: 0;
-            text-transform: uppercase;
-        }
-
-        .signal-indicator {
-            display: flex;
-            gap: 3px;
-            align-items: flex-end;
-            height: 14px;
-        }
-
-        .signal-bar {
-            width: 3px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 1px;
-            transition: height 0.3s ease, background 0.3s ease;
-        }
-
-        .signal-bar:nth-child(1) { height: 4px; }
-        .signal-bar:nth-child(2) { height: 7px; }
-        .signal-bar:nth-child(3) { height: 10px; }
-        .signal-bar:nth-child(4) { height: 14px; }
-
-        .signal-bar.active {
-            background: rgba(255,255,255,0.7);
-        }
-
+        /* ===== SLIDER ===== */
         .slider-container {
             flex-shrink: 0;
-            height: 90px;
-            margin: 4px 0 12px;
+            height: 80px;
+            margin: 8px 0 16px;
             overflow: hidden;
             position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .slider {
@@ -90,43 +56,46 @@
             justify-content: center;
             align-items: center;
             height: 100%;
-            gap: 10px;
-            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            gap: 8px;
+            transition: transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+            position: relative;
         }
 
         .station-item {
             flex: 0 0 auto;
-            padding: 10px 18px;
-            border-radius: 14px;
-            font-size: 15px;
-            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
             letter-spacing: 0.5px;
-            transition: all 0.4s ease;
-            opacity: 0.2;
-            transform: scale(0.65) translateY(6px);
+            transition: all 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
             white-space: nowrap;
-            background: rgba(255,255,255,0.04);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border: 1px solid rgba(255,255,255,0.04);
+            background: transparent;
             cursor: pointer;
             touch-action: manipulation;
-            padding: 8px 14px;
+            opacity: 0.08;
+            transform: scale(0.5);
+            filter: blur(4px);
         }
 
         .station-item.active {
             opacity: 1;
-            transform: scale(1) translateY(0);
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.12);
-            box-shadow: 0 0 50px rgba(255,255,255,0.04);
+            transform: scale(1);
+            filter: blur(0);
+            background: rgba(255,255,255,0.06);
+            padding: 8px 20px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-shadow: 0 0 30px rgba(255,255,255,0.05);
         }
 
         .station-item.prev,
         .station-item.next {
+            opacity: 0.12;
+            transform: scale(0.55);
             filter: blur(3px);
-            opacity: 0.15;
-            transform: scale(0.6) translateY(8px);
         }
 
         .station-item:active {
@@ -134,6 +103,7 @@
             transition-duration: 0.05s;
         }
 
+        /* ===== VINYL ===== */
         .vinyl-container {
             flex: 1;
             display: flex;
@@ -152,6 +122,45 @@
             border-radius: 50%;
             background: #121212;
             box-shadow: 0 0 80px rgba(255,255,255,0.02), inset 0 0 60px rgba(0,0,0,0.5);
+        }
+
+        /* ===== МЕРЦАНИЕ ПО КОНТУРУ ===== */
+        .vinyl::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            padding: 3px;
+            background: conic-gradient(
+                from 0deg,
+                rgba(255,255,255,0.02),
+                rgba(255,255,255,0.08),
+                rgba(255,255,255,0.02),
+                rgba(255,255,255,0.12),
+                rgba(255,255,255,0.02),
+                rgba(255,255,255,0.06),
+                rgba(255,255,255,0.02)
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 1.8s ease;
+            animation: glowPulse 4s ease-in-out infinite;
+            animation-play-state: paused;
+        }
+
+        .vinyl.glow::before {
+            opacity: 1;
+            animation-play-state: running;
+        }
+
+        @keyframes glowPulse {
+            0% { opacity: 0.3; transform: scale(1); }
+            30% { opacity: 0.9; transform: scale(1.01); }
+            60% { opacity: 0.4; transform: scale(0.99); }
+            80% { opacity: 0.7; transform: scale(1.005); }
+            100% { opacity: 0.3; transform: scale(1); }
         }
 
         .vinyl-disc {
@@ -223,6 +232,7 @@
             to { transform: rotate(360deg); }
         }
 
+        /* ===== CONTROLS ===== */
         .controls {
             display: flex;
             justify-content: center;
@@ -238,8 +248,8 @@
             color: #fff;
             padding: 10px;
             cursor: pointer;
-            opacity: 0.35;
-            transition: all 0.2s ease;
+            opacity: 0.3;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -251,7 +261,7 @@
 
         .btn:active {
             transform: scale(0.88);
-            opacity: 0.6;
+            opacity: 0.5;
         }
 
         .btn svg {
@@ -285,7 +295,7 @@
         }
 
         .btn-stop {
-            opacity: 0.25;
+            opacity: 0.2;
             width: 40px;
             height: 40px;
         }
@@ -295,6 +305,7 @@
             height: 16px;
         }
 
+        /* ===== TRACK INFO ===== */
         .track-info {
             flex-shrink: 0;
             text-align: center;
@@ -332,6 +343,7 @@
             50% { opacity: 0.6; }
         }
 
+        /* ===== VOLUME ===== */
         .volume-container {
             position: absolute;
             right: 12px;
@@ -340,7 +352,7 @@
             height: 150px;
             display: flex;
             align-items: center;
-            opacity: 0.25;
+            opacity: 0.2;
             transition: opacity 0.4s ease;
             padding: 12px 6px;
             border-radius: 20px;
@@ -349,7 +361,7 @@
 
         .volume-container:active,
         .volume-container:focus-within {
-            opacity: 0.7;
+            opacity: 0.6;
         }
 
         .volume-slider {
@@ -386,52 +398,26 @@
             cursor: pointer;
         }
 
-        .interference {
-            position: fixed;
-            inset: 0;
-            z-index: 100;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.05s ease;
-            background: repeating-conic-gradient(
-                from 0deg,
-                rgba(255,255,255,0.03) 0deg 5deg,
-                rgba(0,0,0,0.05) 5deg 10deg
-            );
-            mix-blend-mode: overlay;
-        }
-
-        .interference.active {
-            opacity: 1;
-            animation: noise 0.05s steps(5) infinite;
-        }
-
-        @keyframes noise {
-            0% { transform: translate(0, 0); }
-            20% { transform: translate(-2px, 3px); }
-            40% { transform: translate(4px, -1px); }
-            60% { transform: translate(-3px, -4px); }
-            80% { transform: translate(5px, 2px); }
-            100% { transform: translate(-1px, -2px); }
-        }
-
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 420px) {
-            #app { padding: 12px 16px 16px; }
+            #app { padding: 16px 16px 16px; }
             .station-item { font-size: 13px; padding: 6px 12px; }
-            .slider-container { height: 76px; }
+            .station-item.active { font-size: 15px; padding: 6px 16px; }
+            .slider-container { height: 64px; margin: 4px 0 12px; }
             .vinyl { width: 220px; height: 220px; max-width: 60vw; max-height: 60vw; }
             .btn { width: 40px; height: 40px; padding: 6px; }
             .btn-play { width: 56px; height: 56px; }
             .btn-play svg { width: 24px; height: 24px; }
             .track-title { font-size: 14px; }
             .track-artist { font-size: 12px; }
-            .volume-container { right: 6px; height: 120px; opacity: 0.15; }
+            .volume-container { right: 6px; height: 120px; opacity: 0.12; }
             .volume-slider { width: 80px; }
         }
 
         @media (max-width: 360px) {
             .station-item { font-size: 11px; padding: 4px 10px; }
-            .slider-container { height: 64px; }
+            .station-item.active { font-size: 13px; padding: 4px 14px; }
+            .slider-container { height: 56px; }
             .vinyl { width: 160px; height: 160px; max-width: 50vw; max-height: 50vw; }
         }
 
@@ -447,20 +433,12 @@
 <body>
 
     <div id="app">
-        <header class="header">
-            <span class="time" id="currentTime">00:00</span>
-            <div class="signal-indicator" id="signalIndicator">
-                <span class="signal-bar active"></span>
-                <span class="signal-bar active"></span>
-                <span class="signal-bar active"></span>
-                <span class="signal-bar"></span>
-            </div>
-        </header>
-
+        <!-- Слайдер -->
         <section class="slider-container">
             <div class="slider" id="slider"></div>
         </section>
 
+        <!-- Винил -->
         <section class="vinyl-container">
             <div class="vinyl" id="vinyl">
                 <div class="vinyl-disc" id="vinylDisc"></div>
@@ -468,6 +446,7 @@
             </div>
         </section>
 
+        <!-- Транспорт -->
         <section class="controls">
             <button class="btn btn-prev" id="prevBtn" aria-label="Previous">
                 <svg viewBox="0 0 24 24"><polygon points="18,4 8,12 18,20"/><rect x="4" y="4" width="2" height="16"/></svg>
@@ -483,25 +462,25 @@
             </button>
         </section>
 
+        <!-- Информация о треке -->
         <footer class="track-info">
             <div class="track-title loading" id="trackTitle">Connecting</div>
             <div class="track-artist" id="trackArtist">Radio</div>
         </footer>
 
+        <!-- Громкость -->
         <div class="volume-container">
             <input type="range" class="volume-slider" id="volumeSlider" 
                    min="0" max="1" step="0.01" value="0.8">
         </div>
 
         <audio id="audioPlayer" preload="none"></audio>
-        <div class="interference" id="interference"></div>
     </div>
 
     <script>
         (function() {
             'use strict';
 
-            // Проверенные потоки Soma FM (только MP3, работают)
             const STATIONS = [
                 { id: 'groovesalad',     name: 'Groove Salad',     stream: 'https://ice1.somafm.com/groovesalad-128-mp3',     colors: ['#3a1a3a', '#0a0a0a'] },
                 { id: 'spacestation',    name: 'Space Station',    stream: 'https://ice1.somafm.com/spacestation-128-mp3',   colors: ['#0a1a3a', '#0a0a0a'] },
@@ -527,6 +506,7 @@
 
             const app = $('#app');
             const slider = $('#slider');
+            const vinyl = $('#vinyl');
             const vinylDisc = $('#vinylDisc');
             const playBtn = $('#playBtn');
             const playIcon = $('#playIcon');
@@ -537,14 +517,12 @@
             const trackArtist = $('#trackArtist');
             const volumeSlider = $('#volumeSlider');
             const audio = $('#audioPlayer');
-            const interference = $('#interference');
-            const signalBars = $$('.signal-bar');
 
             let currentIndex = 0;
             let isPlaying = false;
             let isStopped = false;
-            let interferenceTimeout = null;
 
+            // ---------- ПОСТРОЕНИЕ СЛАЙДЕРА ----------
             function buildSlider() {
                 slider.innerHTML = '';
                 STATIONS.forEach((station, index) => {
@@ -572,6 +550,7 @@
                 });
             }
 
+            // ---------- ФОН ----------
             function updateBackground(colors) {
                 if (colors && colors.length >= 2) {
                     app.style.background = `
@@ -580,6 +559,16 @@
                 }
             }
 
+            // ---------- МЕРЦАНИЕ ВИНИЛА ----------
+            function setVinylGlow(active) {
+                if (active) {
+                    vinyl.classList.add('glow');
+                } else {
+                    vinyl.classList.remove('glow');
+                }
+            }
+
+            // ---------- АУДИО ----------
             function loadStation(index) {
                 const station = STATIONS[index];
                 if (!station) return;
@@ -588,10 +577,9 @@
                 audio.load();
                 updateSlider(index);
                 updateBackground(station.colors);
-                trackTitle.textContent = 'Loading stream...';
+                trackTitle.textContent = 'Loading...';
                 trackTitle.className = 'track-title loading';
                 trackArtist.textContent = station.name;
-                updateSignalIndicator(false);
             }
 
             function play() {
@@ -604,10 +592,10 @@
                         isPlaying = true;
                         updatePlayButton(true);
                         vinylDisc.style.animationPlayState = 'running';
+                        setVinylGlow(true);
                         trackTitle.textContent = STATIONS[currentIndex].name;
                         trackTitle.className = 'track-title';
                         trackArtist.textContent = 'Now Playing';
-                        updateSignalIndicator(true);
                     })
                     .catch((e) => {
                         console.warn('Play error:', e.message);
@@ -616,7 +604,7 @@
                         isPlaying = false;
                         updatePlayButton(false);
                         vinylDisc.style.animationPlayState = 'paused';
-                        updateSignalIndicator(false);
+                        setVinylGlow(false);
                     });
             }
 
@@ -625,7 +613,7 @@
                 isPlaying = false;
                 updatePlayButton(false);
                 vinylDisc.style.animationPlayState = 'paused';
-                updateSignalIndicator(false);
+                setVinylGlow(false);
             }
 
             function stop() {
@@ -654,22 +642,24 @@
             function doSwitch(newIndex) {
                 if (newIndex === currentIndex && isPlaying) return;
                 
-                triggerInterference(() => {
-                    const wasPlaying = isPlaying;
-                    if (wasPlaying) {
-                        audio.pause();
-                    }
-                    loadStation(newIndex);
-                    if (wasPlaying) {
+                const wasPlaying = isPlaying;
+                if (wasPlaying) {
+                    audio.pause();
+                    setVinylGlow(false);
+                }
+                
+                loadStation(newIndex);
+                
+                if (wasPlaying) {
+                    // Небольшая задержка перед запуском
+                    setTimeout(() => {
                         play();
-                    } else {
-                        updateSlider(newIndex);
-                        updateBackground(STATIONS[newIndex].colors);
-                        trackArtist.textContent = STATIONS[newIndex].name;
-                        trackTitle.textContent = 'Stopped';
-                        trackTitle.className = 'track-title';
-                    }
-                });
+                    }, 300);
+                } else {
+                    trackTitle.textContent = 'Stopped';
+                    trackTitle.className = 'track-title';
+                    trackArtist.textContent = STATIONS[newIndex].name;
+                }
             }
 
             function goToStation(index) {
@@ -678,29 +668,23 @@
                     return;
                 }
                 const wasPlaying = isPlaying;
-                if (wasPlaying) audio.pause();
-                triggerInterference(() => {
-                    loadStation(index);
-                    if (wasPlaying) {
+                if (wasPlaying) {
+                    audio.pause();
+                    setVinylGlow(false);
+                }
+                loadStation(index);
+                if (wasPlaying) {
+                    setTimeout(() => {
                         play();
-                    } else {
-                        trackTitle.textContent = 'Stopped';
-                        trackTitle.className = 'track-title';
-                        trackArtist.textContent = STATIONS[index].name;
-                    }
-                });
+                    }, 300);
+                } else {
+                    trackTitle.textContent = 'Stopped';
+                    trackTitle.className = 'track-title';
+                    trackArtist.textContent = STATIONS[index].name;
+                }
             }
 
-            function updateSignalIndicator(active) {
-                signalBars.forEach((bar, i) => {
-                    if (active) {
-                        bar.classList.toggle('active', i < 3);
-                    } else {
-                        bar.classList.toggle('active', i === 0);
-                    }
-                });
-            }
-
+            // ---------- КНОПКА PLAY/PAUSE ----------
             function updatePlayButton(playing) {
                 if (playing) {
                     playIcon.innerHTML = '<rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/>';
@@ -711,39 +695,11 @@
                 }
             }
 
-            function triggerInterference(callback) {
-                if (interferenceTimeout) {
-                    clearTimeout(interferenceTimeout);
-                    interferenceTimeout = null;
-                }
-                interference.classList.add('active');
-                vinylDisc.style.animationPlayState = 'paused';
-                vinylDisc.style.transform = 'rotate(' + (Math.random() * 10 - 5) + 'deg)';
-                
-                setTimeout(() => {
-                    interference.classList.remove('active');
-                    vinylDisc.style.transform = '';
-                    if (isPlaying) {
-                        vinylDisc.style.animationPlayState = 'running';
-                    }
-                    if (callback) callback();
-                }, 350);
-            }
-
+            // ---------- ИНИЦИАЛИЗАЦИЯ ----------
             function init() {
                 buildSlider();
                 loadStation(0);
                 updatePlayButton(false);
-                
-                function updateTime() {
-                    const now = new Date();
-                    $('#currentTime').textContent = now.toLocaleTimeString('ru', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                }
-                updateTime();
-                setInterval(updateTime, 10000);
 
                 playBtn.addEventListener('click', togglePlay);
                 prevBtn.addEventListener('click', () => switchStation(-1));
@@ -768,7 +724,7 @@
                     isPlaying = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
-                    updateSignalIndicator(false);
+                    setVinylGlow(false);
                 });
             }
 
