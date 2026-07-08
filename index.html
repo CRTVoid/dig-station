@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a0a">
+    
+    <title>Radio Player</title>
+    
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background: #0a0a0a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #ffffff;
+            touch-action: manipulation;
+        }
+
+        /* ===== APP ===== */
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+            padding: 16px 20px 20px;
+            background: radial-gradient(ellipse at 50% 30%, #1a1a2e, #0a0a0a);
+            transition: background 1.4s ease;
+            position: relative;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0 12px;
+            font-size: 13px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            opacity: 0.5;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+
+        .signal-indicator {
+            display: flex;
+            gap: 3px;
+            align-items: flex-end;
+            height: 14px;
+        }
+
+        .signal-bar {
+            width: 3px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 1px;
+            transition: height 0.3s ease;
+        }
+
+        .signal-bar:nth-child(1) { height: 4px; }
+        .signal-bar:nth-child(2) { height: 7px; }
+        .signal-bar:nth-child(3) { height: 10px; }
+        .signal-bar:nth-child(4) { height: 14px; }
+
+        .signal-bar.active {
+            background: rgba(255,255,255,0.9);
+        }
+
+        /* ===== SLIDER ===== */
+        .slider-container {
+            flex-shrink: 0;
+            height: 90px;
+            margin: 4px 0 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slider {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            gap: 10px;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .station-item {
+            flex: 0 0 auto;
+            padding: 10px 18px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: all 0.4s ease;
+            opacity: 0.2;
+            transform: scale(0.65) translateY(6px);
+            white-space: nowrap;
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.04);
+            cursor: pointer;
+            touch-action: manipulation;
+            font-size: 15px;
+            padding: 8px 14px;
+        }
+
+        .station-item.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.12);
+            box-shadow: 0 0 50px rgba(255,255,255,0.04);
+        }
+
+        .station-item.prev,
+        .station-item.next {
+            filter: blur(3px);
+            opacity: 0.15;
+            transform: scale(0.6) translateY(8px);
+        }
+
+        .station-item:active {
+            transform: scale(0.94);
+            transition-duration: 0.05s;
+        }
+
+        /* ===== VINYL ===== */
+        .vinyl-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 0;
+            padding: 4px 0;
+        }
+
+        .vinyl {
+            width: 280px;
+            height: 280px;
+            max-width: 68vw;
+            max-height: 68vw;
+            position: relative;
+            border-radius: 50%;
+            background: #121212;
+            box-shadow: 0 0 80px rgba(255,255,255,0.02), inset 0 0 60px rgba(0,0,0,0.5);
+        }
+
+        .vinyl-disc {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                #1a1a1a, #2d2d2d, #1a1a1a, #333333, #1a1a1a,
+                #2d2d2d, #1a1a1a, #333333, #1a1a1a
+            );
+            animation: spin 8s linear infinite;
+            animation-play-state: paused;
+            position: relative;
+        }
+
+        .vinyl-disc::after {
+            content: '';
+            position: absolute;
+            inset: 6%;
+            border-radius: 50%;
+            background: radial-gradient(
+                circle at 35% 35%,
+                rgba(255,255,255,0.06) 0%,
+                transparent 60%
+            );
+        }
+
+        .vinyl-disc::before {
+            content: '';
+            position: absolute;
+            inset: 14%;
+            border-radius: 50%;
+            background: repeating-radial-gradient(
+                circle at center,
+                transparent 0%,
+                transparent 3%,
+                rgba(255,255,255,0.01) 3.5%,
+                transparent 4%
+            );
+        }
+
+        .vinyl-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 14%;
+            height: 14%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, #666, #111 80%);
+            border: 2px solid #222;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+        }
+
+        .vinyl-center::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40%;
+            height: 40%;
+            border-radius: 50%;
+            background: radial-gradient(circle, #888, #222);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== CONTROLS ===== */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 14px;
+            flex-shrink: 0;
+            padding: 12px 0 6px;
+        }
+
+        .btn {
+            background: none;
+            border: none;
+            color: #fff;
+            padding: 10px;
+            cursor: pointer;
+            opacity: 0.35;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+        }
+
+        .btn:active {
+            transform: scale(0.88);
+            opacity: 0.6;
+        }
+
+        .btn svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+        }
+
+        .btn-play {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            opacity: 1;
+            padding: 0;
+        }
+
+        .btn-play svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .btn-play:active {
+            background: rgba(255,255,255,0.12);
+            transform: scale(0.92);
+        }
+
+        .btn-play.active {
+            opacity: 1;
+        }
+
+        .btn-stop {
+            opacity: 0.25;
+            width: 40px;
+            height: 40px;
+        }
+
+        .btn-stop svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ===== TRACK INFO ===== */
+        .track-info {
+            flex-shrink: 0;
+            text-align: center;
+            padding: 6px 0 2px;
+            min-height: 52px;
+        }
+
+        .track-title {
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.85;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 0.3px;
+        }
+
+        .track-title.loading {
+            opacity: 0.3;
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        .track-artist {
+            font-size: 13px;
+            opacity: 0.4;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        /* ===== VOLUME ===== */
+        .volume-container {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 150px;
+            display: flex;
+            align-items: center;
+            opacity: 0.25;
+            transition: opacity 0.4s ease;
+            padding: 12px 6px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .volume-container:active,
+        .volume-container:focus-within {
+            opacity: 0.7;
+        }
+
+        .volume-slider {
+            writing-mode: bt-lr;
+            -webkit-appearance: slider-vertical;
+            appearance: slider-vertical;
+            width: 3px;
+            height: 100px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255,255,255,0.15);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* ===== INTERFERENCE OVERLAY ===== */
+        .interference {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.05s ease;
+            background: repeating-conic-gradient(
+                from 0deg,
+                rgba(255,255,255,0.03) 0deg 5deg,
+                rgba(0,0,0,0.05) 5deg 10deg
+            );
+            mix-blend-mode: overlay;
+        }
+
+        .interference.active {
+            opacity: 1;
+            animation: noise 0.05s steps(5) infinite;
+        }
+
+        @keyframes noise {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-2px, 3px); }
+            40% { transform: translate(4px, -1px); }
+            60% { transform: translate(-3px, -4px); }
+            80% { transform: translate(5px, 2px); }
+            100% { transform: translate(-1px, -2px); }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 420px) {
+            #app {
+                padding: 12px 16px 16px;
+            }
+
+            .station-item {
+                font-size: 13px;
+                padding: 6px 12px;
+            }
+
+            .slider-container {
+                height: 76px;
+            }
+
+            .vinyl {
+                width: 220px;
+                height: 220px;
+                max-width: 60vw;
+                max-height: 60vw;
+            }
+
+            .btn {
+                width: 40px;
+                height: 40px;
+                padding: 6px;
+            }
+
+            .btn-play {
+                width: 56px;
+                height: 56px;
+            }
+
+            .btn-play svg {
+                width: 24px;
+                height: 24px;
+            }
+
+            .track-title {
+                font-size: 14px;
+            }
+
+            .track-artist {
+                font-size: 12px;
+            }
+
+            .volume-container {
+                right: 6px;
+                height: 120px;
+                opacity: 0.15;
+            }
+
+            .volume-slider {
+                height: 80px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .station-item {
+                font-size: 11px;
+                padding: 4px 10px;
+            }
+
+            .slider-container {
+                height: 64px;
+            }
+
+            .vinyl {
+                width: 160px;
+                height: 160px;
+                max-width: 50vw;
+                max-height: 50vw;
+            }
+        }
+
+        /* Безопасная зона для iPhone с челкой */
+        @supports (padding: max(0px)) {
+            #app {
+                padding-left: max(20px, env(safe-area-inset-left));
+                padding-right: max(20px, env(safe-area-inset-right));
+                padding-bottom: max(20px, env(safe-area-inset-bottom));
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <!-- Шапка -->
+        <header class="header">
+            <span class="time" id="currentTime">00:00</span>
+            <div class="signal-indicator" id="signalIndicator">
+                <span class="signal-bar active"></span>
+                <span class="signal-bar active"></span>
+                <span class="signal-bar active"></span>
+                <span class="signal-bar"></span>
+            </div>
+        </header>
+
+        <!-- Слайдер -->
+        <section class="slider-container">
+            <div class="slider" id="slider"></div>
+        </section>
+
+        <!-- Винил -->
+        <section class="vinyl-container">
+            <div class="vinyl" id="vinyl">
+                <div class="vinyl-disc" id="vinylDisc"></div>
+                <div class="vinyl-center"></div>
+            </div>
+        </section>
+
+        <!-- Транспорт -->
+        <section class="controls">
+            <button class="btn btn-prev" id="prevBtn" aria-label="Previous">
+                <svg viewBox="0 0 24 24"><polygon points="18,4 8,12 18,20"/><rect x="4" y="4" width="2" height="16"/></svg>
+            </button>
+            <button class="btn btn-play" id="playBtn" aria-label="Play">
+                <svg viewBox="0 0 24 24" id="playIcon"><polygon points="5,3 19,12 5,21"/></svg>
+            </button>
+            <button class="btn btn-next" id="nextBtn" aria-label="Next">
+                <svg viewBox="0 0 24 24"><polygon points="6,4 16,12 6,20"/><rect x="18" y="4" width="2" height="16"/></svg>
+            </button>
+            <button class="btn btn-stop" id="stopBtn" aria-label="Stop">
+                <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/></svg>
+            </button>
+        </section>
+
+        <!-- Информация о треке -->
+        <footer class="track-info">
+            <div class="track-title loading" id="trackTitle">Connecting</div>
+            <div class="track-artist" id="trackArtist">Radio</div>
+        </footer>
+
+        <!-- Громкость -->
+        <div class="volume-container">
+            <input type="range" class="volume-slider" id="volumeSlider" 
+                   min="0" max="1" step="0.01" value="0.8" orient="vertical">
+        </div>
+
+        <!-- Скрытое аудио -->
+        <audio id="audioPlayer" preload="none"></audio>
+
+        <!-- Оверлей помех -->
+        <div class="interference" id="interference"></div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  RADIO PLAYER — полный код (ядро + UI)
+        // ============================================================
+
+        (function() {
+            'use strict';
+
+            // ---------- СТАНЦИИ ----------
+            const STATIONS = [
+                { id: 'groovesalad',     name: 'Groove Salad',     stream: 'https://ice1.somafm.com/groovesalad-128-mp3',     colors: ['#3a1a3a', '#0a0a0a'] },
+                { id: 'spacestation',    name: 'Space Station',    stream: 'https://ice1.somafm.com/spacestation-128-mp3',   colors: ['#0a1a3a', '#0a0a0a'] },
+                { id: 'darkzone',        name: 'Dark Zone',        stream: 'https://ice1.somafm.com/darkzone-128-mp3',       colors: ['#1a0a1a', '#000000'] },
+                { id: 'metaldetector',   name: 'Metal Detector',   stream: 'https://ice1.somafm.com/metaldetector-128-mp3',  colors: ['#3a1a0a', '#0a0a0a'] },
+                { id: 'defcon',          name: 'DEF CON Radio',    stream: 'https://ice1.somafm.com/defcon-128-mp3',         colors: ['#0a3a1a', '#0a0a0a'] },
+                { id: 'underground80s',  name: 'Underground 80s',  stream: 'https://ice1.somafm.com/underground80s-128-mp3', colors: ['#2a1a3a', '#0a0a0a'] },
+                { id: 'bootliquor',      name: 'Boot Liquor',      stream: 'https://ice1.somafm.com/bootliquor-128-mp3',     colors: ['#3a2a0a', '#0a0a0a'] },
+                { id: 'sevensoul',       name: 'Seven Inch Soul',  stream: 'https://ice1.somafm.com/sevensoul-128-mp3',      colors: ['#1a2a3a', '#0a0a0a'] },
+                { id: 'fluid',           name: 'Fluid',            stream: 'https://ice1.somafm.com/fluid-128-mp3',          colors: ['#0a2a2a', '#0a0a0a'] },
+                { id: 'secretagent',     name: 'Secret Agent',     stream: 'https://ice1.somafm.com/secretagent-128-mp3',    colors: ['#0a1a4a', '#0a0a0a'] },
+                { id: 'beatblender',     name: 'Beat Blender',     stream: 'https://ice1.somafm.com/beatblender-128-mp3',    colors: ['#2a0a3a', '#0a0a0a'] },
+                { id: 'sf1033',          name: 'SF 10-33',         stream: 'https://ice1.somafm.com/sf1033-128-mp3',         colors: ['#1a1a1a', '#0a0a0a'] },
+                { id: 'policescanner',   name: 'SF Police',        stream: 'https://ice1.somafm.com/policescanner-128-mp3',  colors: ['#0a0a2a', '#0a0a0a'] },
+                { id: 'blackrock',       name: 'Black Rock FM',    stream: 'https://ice1.somafm.com/blackrock-128-mp3',      colors: ['#2a1a0a', '#0a0a0a'] },
+                { id: 'vaporwaves',      name: 'Vaporwaves',       stream: 'https://ice1.somafm.com/vaporwaves-128-mp3',     colors: ['#1a0a2a', '#0a0a0a'] },
+                { id: 'n5md',            name: 'n5MD Radio',       stream: 'https://ice1.somafm.com/n5md-128-mp3',           colors: ['#0a1a2a', '#0a0a0a'] },
+                { id: 'sfinSF',          name: 'SF in SF',         stream: 'https://ice1.somafm.com/sfinsf-128-mp3',         colors: ['#1a1a2a', '#0a0a0a'] }
+            ];
+
+            // ---------- DOM-ссылки ----------
+            const $ = (sel) => document.querySelector(sel);
+            const $$ = (sel) => document.querySelectorAll(sel);
+
+            const app = $('#app');
+            const slider = $('#slider');
+            const vinyl = $('#vinyl');
+            const vinylDisc = $('#vinylDisc');
+            const playBtn = $('#playBtn');
+            const playIcon = $('#playIcon');
+            const prevBtn = $('#prevBtn');
+            const nextBtn = $('#nextBtn');
+            const stopBtn = $('#stopBtn');
+            const trackTitle = $('#trackTitle');
+            const trackArtist = $('#trackArtist');
+            const volumeSlider = $('#volumeSlider');
+            const audio = $('#audioPlayer');
+            const interference = $('#interference');
+            const signalBars = $$('.signal-bar');
+
+            // ---------- СОСТОЯНИЕ ----------
+            let currentIndex = 0;
+            let isPlaying = false;
+            let isStopped = false;
+            let trackInterval = null;
+            let interferenceTimeout = null;
+
+            // ---------- ПОСТРОЕНИЕ СЛАЙДЕРА ----------
+            function buildSlider() {
+                slider.innerHTML = '';
+                STATIONS.forEach((station, index) => {
+                    const el = document.createElement('div');
+                    el.className = 'station-item';
+                    el.textContent = station.name;
+                    el.dataset.index = index;
+                    slider.appendChild(el);
+                });
+                updateSlider(0);
+            }
+
+            function updateSlider(activeIndex) {
+                const items = slider.querySelectorAll('.station-item');
+                const total = items.length;
+                items.forEach((item, index) => {
+                    item.classList.remove('active', 'prev', 'next');
+                    if (index === activeIndex) {
+                        item.classList.add('active');
+                    } else if (index === (activeIndex - 1 + total) % total) {
+                        item.classList.add('prev');
+                    } else if (index === (activeIndex + 1) % total) {
+                        item.classList.add('next');
+                    }
+                });
+            }
+
+            // ---------- ФОН ----------
+            function updateBackground(colors) {
+                if (colors && colors.length >= 2) {
+                    app.style.background = `
+                        radial-gradient(ellipse at 50% 30%, ${colors[0]}, ${colors[1]})
+                    `;
+                }
+            }
+
+            // ---------- АУДИО ----------
+            function loadStation(index) {
+                const station = STATIONS[index];
+                if (!station) return;
+                currentIndex = index;
+                audio.src = station.stream;
+                audio.load();
+                updateSlider(index);
+                updateBackground(station.colors);
+                trackTitle.textContent = 'Connecting';
+                trackTitle.className = 'track-title loading';
+                trackArtist.textContent = station.name;
+                // Сброс индикатора сигнала
+                updateSignalIndicator(false);
+            }
+
+            function play() {
+                if (isStopped) {
+                    audio.currentTime = 0;
+                    isStopped = false;
+                }
+                audio.play()
+                    .then(() => {
+                        isPlaying = true;
+                        updatePlayButton(true);
+                        vinylDisc.style.animationPlayState = 'running';
+                        trackTitle.className = 'track-title';
+                        updateSignalIndicator(true);
+                        startTrackUpdater();
+                    })
+                    .catch((e) => {
+                        console.warn('Play error:', e);
+                        trackTitle.textContent = 'Error';
+                        trackTitle.className = 'track-title loading';
+                    });
+            }
+
+            function pause() {
+                audio.pause();
+                isPlaying = false;
+                updatePlayButton(false);
+                vinylDisc.style.animationPlayState = 'paused';
+                updateSignalIndicator(false);
+                stopTrackUpdater();
+            }
+
+            function stop() {
+                pause();
+                audio.currentTime = 0;
+                isStopped = true;
+                trackTitle.textContent = 'Stopped';
+                trackTitle.className = 'track-title';
+                trackArtist.textContent = STATIONS[currentIndex].name;
+                stopTrackUpdater();
+            }
+
+            function togglePlay() {
+                if (isPlaying) {
+                    pause();
+                } else {
+                    play();
+                }
+            }
+
+            function switchStation(direction) {
+                const total = STATIONS.length;
+                let newIndex = (currentIndex + direction + total) % total;
+                // Если direction === 0 — переключение по индексу
+                if (direction === 0) {
+                    // используется при клике по станции
+                }
+                // При клике по станции передаём индекс напрямую
+                if (typeof direction === 'number' && Math.abs(direction) > 1) {
+                    // handled separately
+                }
+                doSwitch(newIndex);
+            }
+
+            function doSwitch(newIndex) {
+                if (newIndex === currentIndex && isPlaying) return;
+                
+                // Эффект помех
+                triggerInterference(() => {
+                    const wasPlaying = isPlaying;
+                    if (wasPlaying) {
+                        audio.pause();
+                    }
+                    loadStation(newIndex);
+                    if (wasPlaying) {
+                        play();
+                    } else {
+                        updateSlider(newIndex);
+                        updateBackground(STATIONS[newIndex].colors);
+                        trackArtist.textContent = STATIONS[newIndex].name;
+                        trackTitle.textContent = 'Stopped';
+                        trackTitle.className = 'track-title';
+                    }
+                });
+            }
+
+            // ---------- ПЕРЕКЛЮЧЕНИЕ ПО ИНДЕКСУ (клик по слайдеру) ----------
+            function goToStation(index) {
+                if (index === currentIndex) {
+                    if (!isPlaying) togglePlay();
+                    return;
+                }
+                const wasPlaying = isPlaying;
+                if (wasPlaying) audio.pause();
+                triggerInterference(() => {
+                    loadStation(index);
+                    if (wasPlaying) {
+                        play();
+                    } else {
+                        trackTitle.textContent = 'Stopped';
+                        trackTitle.className = 'track-title';
+                        trackArtist.textContent = STATIONS[index].name;
+                    }
+                });
+            }
+
+            // ---------- ИНДИКАТОР СИГНАЛА ----------
+            function updateSignalIndicator(active) {
+                signalBars.forEach((bar, i) => {
+                    if (active) {
+                        bar.classList.toggle('active', i < 3);
+                    } else {
+                        bar.classList.toggle('active', i === 0);
+                    }
+                });
+            }
+
+            // ---------- КНОПКА PLAY/PAUSE ----------
+            function updatePlayButton(playing) {
+                if (playing) {
+                    playIcon.innerHTML = '<rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/>';
+                    playBtn.classList.add('active');
+                } else {
+                    playIcon.innerHTML = '<polygon points="5,3 19,12 5,21"/>';
+                    playBtn.classList.remove('active');
+                }
+            }
+
+            // ---------- ТРЕКИ (Soma FM API) ----------
+            function startTrackUpdater() {
+                stopTrackUpdater();
+                trackInterval = setInterval(fetchTrack, 5000);
+                fetchTrack(); // сразу
+            }
+
+            function stopTrackUpdater() {
+                if (trackInterval) {
+                    clearInterval(trackInterval);
+                    trackInterval = null;
+                }
+            }
+
+            async function fetchTrack() {
+                const station = STATIONS[currentIndex];
+                if (!station) return;
+                try {
+                    const url = `https://api.somafm.com/songhistory/${station.id}`;
+                    const resp = await fetch(url);
+                    if (!resp.ok) throw new Error('API error');
+                    const data = await resp.json();
+                    if (data && data.length > 0) {
+                        const last = data[0];
+                        if (last.title && last.artist) {
+                            trackTitle.textContent = last.title;
+                            trackArtist.textContent = last.artist;
+                            trackTitle.className = 'track-title';
+                            return;
+                        }
+                    }
+                    // Если данных нет — показываем станцию
+                    trackTitle.textContent = station.name;
+                    trackArtist.textContent = 'Now Playing';
+                    trackTitle.className = 'track-title';
+                } catch (e) {
+                    // Тишина — не спамим ошибками
+                }
+            }
+
+            // ---------- ПОМЕХИ ----------
+            function triggerInterference(callback) {
+                if (interferenceTimeout) {
+                    clearTimeout(interferenceTimeout);
+                    interferenceTimeout = null;
+                }
+                interference.classList.add('active');
+                // Винил дёргается
+                vinylDisc.style.animationPlayState = 'paused';
+                vinylDisc.style.transform = 'rotate(' + (Math.random() * 10 - 5) + 'deg)';
+                
+                setTimeout(() => {
+                    interference.classList.remove('active');
+                    vinylDisc.style.transform = '';
+                    if (isPlaying) {
+                        vinylDisc.style.animationPlayState = 'running';
+                    }
+                    if (callback) callback();
+                }, 350);
+            }
+
+            // ---------- ИНИЦИАЛИЗАЦИЯ ----------
+            function init() {
+                buildSlider();
+                loadStation(0);
+                updatePlayButton(false);
+                
+                // Часы
+                function updateTime() {
+                    const now = new Date();
+                    $('#currentTime').textContent = now.toLocaleTimeString('ru', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+                updateTime();
+                setInterval(updateTime, 10000);
+
+                // События кнопок
+                playBtn.addEventListener('click', togglePlay);
+                prevBtn.addEventListener('click', () => switchStation(-1));
+                nextBtn.addEventListener('click', () => switchStation(1));
+                stopBtn.addEventListener('click', stop);
+
+                // Громкость
+                volumeSlider.addEventListener('input', (e) => {
+                    audio.volume = parseFloat(e.target.value);
+                });
+
+                // Клик по станциям в слайдере
+                slider.addEventListener('click', (e) => {
+                    const item = e.target.closest('.station-item');
+                    if (item) {
+                        const index = parseInt(item.dataset.index);
+                        goToStation(index);
+                    }
+                });
+
+                // Обработка ошибок аудио
+                audio.addEventListener('error', () => {
+                    trackTitle.textContent = 'Stream Error';
+                    trackTitle.className = 'track-title loading';
+                    isPlaying = false;
+                    updatePlayButton(false);
+                    vinylDisc.style.animationPlayState = 'paused';
+                    updateSignalIndicator(false);
+                    stopTrackUpdater();
+                });
+
+                // Автоплей при загрузке (по требованию браузера)
+                // Не включаем автоматически — пользователь сам нажмёт Play
+                // Но можно попробовать, если нужно:
+                // play();
+            }
+
+            // Запуск после загрузки DOM
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>
