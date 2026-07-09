@@ -6,10 +6,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="192x192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="dig station">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a0a">
     
     <title>Dig station</title>
@@ -137,6 +135,27 @@
             opacity: 0.4;
             margin-top: 1px;
             letter-spacing: 0.5px;
+        }
+
+        .now-playing {
+            flex-shrink: 0;
+            text-align: center;
+            padding: 4px 0 8px 0;
+            min-height: 44px;
+        }
+
+        .now-playing .track-title {
+            font-size: 15px;
+            font-weight: 500;
+            opacity: 0.9;
+            letter-spacing: 0.2px;
+        }
+
+        .now-playing .track-artist {
+            font-size: 12px;
+            opacity: 0.5;
+            margin-top: 1px;
+            letter-spacing: 0.3px;
         }
 
         .vinyl-container {
@@ -311,6 +330,9 @@
             .station-name-display { padding: 4px 0 6px 0; }
             .station-name-display .track { font-size: 13px; }
             .station-name-display .artist { font-size: 11px; }
+            .now-playing { min-height: 36px; padding: 2px 0 6px 0; }
+            .now-playing .track-title { font-size: 13px; }
+            .now-playing .track-artist { font-size: 11px; }
             .vinyl { width: 260px; height: 260px; max-width: 70vw; max-height: 70vw; }
             .controls { gap: 12px; padding: 0 0 2px 0; margin-top: -4px; margin-bottom: 20px; }
             .btn { width: 32px; height: 32px; padding: 4px; font-size: 0.8rem; }
@@ -329,6 +351,8 @@
             .slider-container .swiper-slide-next img { width: 30px; height: 30px; }
             .station-name-display .track { font-size: 12px; }
             .station-name-display .artist { font-size: 10px; }
+            .now-playing .track-title { font-size: 12px; }
+            .now-playing .track-artist { font-size: 10px; }
             .vinyl { width: 200px; height: 200px; max-width: 60vw; max-height: 60vw; }
             .controls { gap: 8px; margin-bottom: 16px; }
             .btn { width: 28px; height: 28px; font-size: 0.7rem; }
@@ -363,6 +387,11 @@
         <div class="station-name-display" id="stationNameDisplay">
             <div class="track" id="displayTrack">Groove Salad</div>
             <div class="artist" id="displayArtist">SomaFM · Chillout</div>
+        </div>
+
+        <div class="now-playing" id="nowPlaying">
+            <div class="track-title" id="nowTrackTitle">--</div>
+            <div class="track-artist" id="nowTrackArtist">--</div>
         </div>
 
         <section class="vinyl-container">
@@ -402,262 +431,321 @@
             'use strict';
 
             const STATIONS = [
-                { value: 'https://ice1.somafm.com/groovesalad-128-mp3', track: 'Groove Salad', station: 'SomaFM · Chillout', img: 'https://somafm.com/logos/400/groovesalad400.png' },
-                { value: 'https://ice1.somafm.com/darkzone-128-mp3', track: 'The Dark Zone', station: 'SomaFM · Ambient', img: 'https://somafm.com/logos/400/darkzone400.jpg' },
-                { value: 'https://ice1.somafm.com/defcon-128-mp3', track: 'Def Con Radio', station: 'SomaFM · Dark Ambient', img: 'https://somafm.com/logos/400/defcon400.png' },
-                { value: 'https://ice1.somafm.com/metal-128-mp3', track: 'Metal Detector', station: 'SomaFM · Heavy Metal', img: 'https://somafm.com/logos/400/metal400.png' },
-                { value: 'https://ice1.somafm.com/u80s-128-mp3', track: 'Underground 80s', station: 'SomaFM · 80s Underground', img: 'https://somafm.com/logos/400/u80s400.png' },
-                { value: 'https://ice1.somafm.com/7soul-128-mp3', track: 'Seven Inch Soul', station: 'SomaFM · Soul Classics', img: 'https://somafm.com/logos/400/7soul400.jpg' },
-                { value: 'https://ice1.somafm.com/insound-128-mp3', track: 'The In-Sound', station: 'SomaFM · 60s Garage', img: 'https://somafm.com/logos/400/insound-400.jpg' },
-                { value: 'https://ice1.somafm.com/covers-128-mp3', track: 'Covers', station: 'SomaFM · Cover Versions', img: 'https://somafm.com/logos/400/covers400.png' },
-                { value: 'https://ice1.somafm.com/sf1033-128-mp3', track: 'SF 10-33', station: 'SomaFM · Police Radio', img: 'https://somafm.com/logos/400/sf1033400.png' },
-                { value: 'https://ice1.somafm.com/scanner-128-mp3', track: 'SF Police Scanner', station: 'SomaFM · Live Scanner', img: 'https://somafm.com/logos/400/scanner400.jpg' },
-                { value: 'https://ice5.somafm.com/brfm-128-mp3', track: 'Black Rock FM', station: 'SomaFM · Dusty Desert Rock', img: 'https://somafm.com/logos/400/brfm400.png' },
-                { value: 'https://ice1.somafm.com/sfinsf-128-mp3', track: 'SF in SF', station: 'SomaFM · Live in SF', img: 'https://somafm.com/logos/400/sfinsf400.jpg' },
-                { value: 'https://ice1.somafm.com/vaporwaves-128-mp3', track: 'Vaporwaves', station: 'SomaFM · Vaporwave', img: 'https://somafm.com/logos/400/vaporwaves400.png' },
-                { value: 'https://ice1.somafm.com/doomed-128-mp3', track: 'Doomed', station: 'SomaFM · Doom Metal', img: 'https://somafm.com/img3/doomed-400.png' },
-                { value: 'https://ice1.somafm.com/beatblender-128-mp3', track: 'Beat Blender', station: 'SomaFM · Deep House', img: 'https://somafm.com/logos/400/beatblender400.png' },
-                { value: 'https://ice1.somafm.com/bootliquor-128-mp3', track: 'Boot Liquor', station: 'SomaFM · Americana', img: 'https://somafm.com/logos/400/bootliquor400.png' },
+                { id: 'groovesalad', value: 'https://ice1.somafm.com/groovesalad-128-mp3', track: 'Groove Salad', station: 'SomaFM · Chillout', img: 'https://somafm.com/logos/400/groovesalad400.png' },
+                { id: 'darkzone', value: 'https://ice1.somafm.com/darkzone-128-mp3', track: 'The Dark Zone', station: 'SomaFM · Ambient', img: 'https://somafm.com/logos/400/darkzone400.jpg' },
+                { id: 'defcon', value: 'https://ice1.somafm.com/defcon-128-mp3', track: 'Def Con Radio', station: 'SomaFM · Dark Ambient', img: 'https://somafm.com/logos/400/defcon400.png' },
+                { id: 'metal', value: 'https://ice1.somafm.com/metal-128-mp3', track: 'Metal Detector', station: 'SomaFM · Heavy Metal', img: 'https://somafm.com/logos/400/metal400.png' },
+                { id: 'u80s', value: 'https://ice1.somafm.com/u80s-128-mp3', track: 'Underground 80s', station: 'SomaFM · 80s Underground', img: 'https://somafm.com/logos/400/u80s400.png' },
+                { id: '7soul', value: 'https://ice1.somafm.com/7soul-128-mp3', track: 'Seven Inch Soul', station: 'SomaFM · Soul Classics', img: 'https://somafm.com/logos/400/7soul400.jpg' },
+                { id: 'insound', value: 'https://ice1.somafm.com/insound-128-mp3', track: 'The In-Sound', station: 'SomaFM · 60s Garage', img: 'https://somafm.com/logos/400/insound-400.jpg' },
+                { id: 'covers', value: 'https://ice1.somafm.com/covers-128-mp3', track: 'Covers', station: 'SomaFM · Cover Versions', img: 'https://somafm.com/logos/400/covers400.png' },
+                { id: 'sf1033', value: 'https://ice1.somafm.com/sf1033-128-mp3', track: 'SF 10-33', station: 'SomaFM · Police Radio', img: 'https://somafm.com/logos/400/sf1033400.png' },
+                { id: 'scanner', value: 'https://ice1.somafm.com/scanner-128-mp3', track: 'SF Police Scanner', station: 'SomaFM · Live Scanner', img: 'https://somafm.com/logos/400/scanner400.jpg' },
+                { id: 'brfm', value: 'https://ice5.somafm.com/brfm-128-mp3', track: 'Black Rock FM', station: 'SomaFM · Dusty Desert Rock', img: 'https://somafm.com/logos/400/brfm400.png' },
+                { id: 'sfinsf', value: 'https://ice1.somafm.com/sfinsf-128-mp3', track: 'SF in SF', station: 'SomaFM · Live in SF', img: 'https://somafm.com/logos/400/sfinsf400.jpg' },
+                { id: 'vaporwaves', value: 'https://ice1.somafm.com/vaporwaves-128-mp3', track: 'Vaporwaves', station: 'SomaFM · Vaporwave', img: 'https://somafm.com/logos/400/vaporwaves400.png' },
+                { id: 'doomed', value: 'https://ice1.somafm.com/doomed-128-mp3', track: 'Doomed', station: 'SomaFM · Doom Metal', img: 'https://somafm.com/img3/doomed-400.png' },
+                { id: 'beatblender', value: 'https://ice1.somafm.com/beatblender-128-mp3', track: 'Beat Blender', station: 'SomaFM · Deep House', img: 'https://somafm.com/logos/400/beatblender400.png' },
+                { id: 'bootliquor', value: 'https://ice1.somafm.com/bootliquor-128-mp3', track: 'Boot Liquor', station: 'SomaFM · Americana', img: 'https://somafm.com/logos/400/bootliquor400.png' },
             ];
 
             const $ = (sel) => document.querySelector(sel);
-        const app = $('#app');
-        const vinylDisc = $('#vinylDisc');
-        const playBtn = $('#playBtn');
-        const playIcon = $('#playIcon');
-        const prevBtn = $('#prevBtn');
-        const nextBtn = $('#nextBtn');
-        const volumeSlider = $('#volumeSlider');
-        const audio = $('#audioPlayer');
-        const sliderWrapper = $('#sliderWrapper');
-        const displayTrack = $('#displayTrack');
-        const displayArtist = $('#displayArtist');
+            const app = $('#app');
+            const vinylDisc = $('#vinylDisc');
+            const playBtn = $('#playBtn');
+            const playIcon = $('#playIcon');
+            const prevBtn = $('#prevBtn');
+            const nextBtn = $('#nextBtn');
+            const volumeSlider = $('#volumeSlider');
+            const audio = $('#audioPlayer');
+            const sliderWrapper = $('#sliderWrapper');
+            const displayTrack = $('#displayTrack');
+            const displayArtist = $('#displayArtist');
+            const nowTrackTitle = $('#nowTrackTitle');
+            const nowTrackArtist = $('#nowTrackArtist');
 
-        let currentIndex = 0;
-        let isPlaying = false;
-        let swiper = null;
-        let isSwitching = false;
+            let currentIndex = 0;
+            let isPlaying = false;
+            let swiper = null;
+            let isSwitching = false;
+            let trackUpdateInterval = null;
 
-        function buildSlider() {
-            sliderWrapper.innerHTML = '';
-            STATIONS.forEach((station, index) => {
-                const slide = document.createElement('div');
-                slide.className = 'swiper-slide';
-                slide.dataset.index = index;
-                
-                const img = document.createElement('img');
-                img.src = station.img;
-                img.alt = station.track;
-                img.loading = 'lazy';
-                
-                slide.appendChild(img);
-                sliderWrapper.appendChild(slide);
-            });
-
-            swiper = new Swiper('#stationSwiper', {
-    slidesPerView: 7,           // По умолчанию для ПК
-    centeredSlides: true,
-    loop: true,
-    spaceBetween: 4,
-    speed: 500,
-    allowTouchMove: true,
-    watchSlidesProgress: true,
-    
-    // ===== АДАПТИВНОСТЬ =====
-    breakpoints: {
-        // Когда ширина экрана >= 1024px — показываем 7
-        1024: {
-            slidesPerView: 7,
-            spaceBetween: 6
-        },
-        // Когда ширина экрана >= 768px (планшеты) — показываем 5
-        768: {
-            slidesPerView: 5,
-            spaceBetween: 4
-        },
-        // Когда ширина экрана < 768px (телефоны) — показываем 5 (или 3)
-        0: {
-            slidesPerView: 5,
-            spaceBetween: 2
-        }
-    },
-    
-    on: {
-        slideChange: function() {
-            const realIndex = this.realIndex;
-            if (realIndex !== currentIndex) {
-                switchToStation(realIndex);
+            // ===== ПОЛУЧЕНИЕ ТРЕКА ИЗ channels.xml =====
+            async function fetchTrackFromXML(stationId) {
+                if (!stationId) return;
+                try {
+                    const proxyUrl = `https://api.allorigins.win/raw?url=https://somafm.com/channels.xml`;
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error('Network error');
+                    const xmlText = await response.text();
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                    
+                    const channel = xmlDoc.querySelector(`channel[id="${stationId}"]`);
+                    if (!channel) {
+                        console.warn('Station not found in XML:', stationId);
+                        nowTrackTitle.textContent = '--';
+                        nowTrackArtist.textContent = '--';
+                        return;
+                    }
+                    
+                    const lastPlaying = channel.querySelector('lastPlaying')?.textContent || '';
+                    if (lastPlaying) {
+                        const parts = lastPlaying.split(' - ');
+                        if (parts.length > 1) {
+                            nowTrackArtist.textContent = parts[0].trim();
+                            nowTrackTitle.textContent = parts.slice(1).join(' - ').trim();
+                        } else {
+                            nowTrackTitle.textContent = lastPlaying.trim();
+                            nowTrackArtist.textContent = '';
+                        }
+                    } else {
+                        nowTrackTitle.textContent = '--';
+                        nowTrackArtist.textContent = '--';
+                    }
+                } catch (error) {
+                    console.warn('XML fetch error:', error);
+                    nowTrackTitle.textContent = 'Track info unavailable';
+                    nowTrackArtist.textContent = '';
+                }
             }
-        }
-    }
-});
 
-            document.querySelectorAll('.swiper-slide').forEach((slide) => {
-                slide.addEventListener('click', function() {
-                    const index = parseInt(this.dataset.index);
-                    if (!isNaN(index) && swiper) {
-                        swiper.slideToLoop(index);
+            function startTrackUpdates(stationId) {
+                if (trackUpdateInterval) {
+                    clearInterval(trackUpdateInterval);
+                    trackUpdateInterval = null;
+                }
+
+                if (stationId === 'u80s') {
+                    fetchTrackFromXML(stationId);
+                    trackUpdateInterval = setInterval(() => {
+                        fetchTrackFromXML(stationId);
+                    }, 15000);
+                } else {
+                    nowTrackTitle.textContent = '--';
+                    nowTrackArtist.textContent = '--';
+                }
+            }
+
+            function buildSlider() {
+                sliderWrapper.innerHTML = '';
+                STATIONS.forEach((station, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'swiper-slide';
+                    slide.dataset.index = index;
+                    
+                    const img = document.createElement('img');
+                    img.src = station.img;
+                    img.alt = station.track;
+                    img.loading = 'lazy';
+                    
+                    slide.appendChild(img);
+                    sliderWrapper.appendChild(slide);
+                });
+
+                swiper = new Swiper('#stationSwiper', {
+                    slidesPerView: 7,
+                    centeredSlides: true,
+                    loop: true,
+                    spaceBetween: 4,
+                    speed: 500,
+                    allowTouchMove: true,
+                    watchSlidesProgress: true,
+                    
+                    breakpoints: {
+                        1024: {
+                            slidesPerView: 7,
+                            spaceBetween: 6
+                        },
+                        768: {
+                            slidesPerView: 5,
+                            spaceBetween: 4
+                        },
+                        0: {
+                            slidesPerView: 5,
+                            spaceBetween: 2
+                        }
+                    },
+                    
+                    on: {
+                        slideChange: function() {
+                            const realIndex = this.realIndex;
+                            if (realIndex !== currentIndex) {
+                                switchToStation(realIndex);
+                            }
+                        }
                     }
                 });
-            });
-        }
 
-        function updateBackground(index) {
-            const colors = [
-                ['#1a3a2a', '#0a120e'], ['#2a2218', '#0f0c0a'],
-                ['#2a1a30', '#0f0a12'], ['#2a1015', '#0e0608'],
-                ['#2a1a3d', '#0f0a14'], ['#2a1f12', '#0f0b08'],
-                ['#2a1f0d', '#0f0e08'], ['#2a1d14', '#0f0c0a'],
-                ['#1a2a1a', '#0a0e0a'], ['#1a2a1a', '#0a0e0a'],
-                ['#3a2a1a', '#120e08'], ['#2a181a', '#0f0a0a'],
-                ['#4a1a5a', '#1a0a1a'], ['#1a1a1e', '#0a0a0c'],
-                ['#2a1a3a', '#0e0a12'], ['#4a3628', '#1a140e'],
-            ];
-            const c = colors[index % colors.length];
-            if (c) {
-                app.style.background = `radial-gradient(ellipse at 50% 30%, ${c[0]}, ${c[1]})`;
-            }
-        }
-
-        function updateDisplay(index) {
-            const station = STATIONS[index];
-            if (station) {
-                displayTrack.textContent = station.track;
-                displayArtist.textContent = station.station;
-            }
-        }
-
-        function switchToStation(index) {
-            if (isSwitching) return;
-            isSwitching = true;
-
-            const station = STATIONS[index];
-            if (!station) {
-                isSwitching = false;
-                return;
-            }
-
-            currentIndex = index;
-            updateBackground(index);
-            updateDisplay(index);
-
-            audio.src = station.value;
-            audio.load();
-
-            if (isPlaying) {
-                audio.play()
-                    .then(() => {
-                        vinylDisc.style.animationPlayState = 'running';
-                        isSwitching = false;
-                    })
-                    .catch((e) => {
-                        console.warn('Play error:', e.message);
-                        isPlaying = false;
-                        updatePlayButton(false);
-                        vinylDisc.style.animationPlayState = 'paused';
-                        isSwitching = false;
+                document.querySelectorAll('.swiper-slide').forEach((slide) => {
+                    slide.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        if (!isNaN(index) && swiper) {
+                            swiper.slideToLoop(index);
+                        }
                     });
-            } else {
-                isSwitching = false;
+                });
             }
-        }
 
-        function togglePlay() {
-            if (isPlaying) {
-                audio.pause();
-                isPlaying = false;
-                updatePlayButton(false);
-                vinylDisc.style.animationPlayState = 'paused';
-            } else {
-                const station = STATIONS[currentIndex];
-                if (!station) return;
+            function updateBackground(index) {
+                const colors = [
+                    ['#1a3a2a', '#0a120e'], ['#2a2218', '#0f0c0a'],
+                    ['#2a1a30', '#0f0a12'], ['#2a1015', '#0e0608'],
+                    ['#2a1a3d', '#0f0a14'], ['#2a1f12', '#0f0b08'],
+                    ['#2a1f0d', '#0f0e08'], ['#2a1d14', '#0f0c0a'],
+                    ['#1a2a1a', '#0a0e0a'], ['#1a2a1a', '#0a0e0a'],
+                    ['#3a2a1a', '#120e08'], ['#2a181a', '#0f0a0a'],
+                    ['#4a1a5a', '#1a0a1a'], ['#1a1a1e', '#0a0a0c'],
+                    ['#2a1a3a', '#0e0a12'], ['#4a3628', '#1a140e'],
+                ];
+                const c = colors[index % colors.length];
+                if (c) {
+                    app.style.background = `radial-gradient(ellipse at 50% 30%, ${c[0]}, ${c[1]})`;
+                }
+            }
 
-                if (audio.src && audio.src === station.value) {
+            function updateDisplay(index) {
+                const station = STATIONS[index];
+                if (station) {
+                    displayTrack.textContent = station.track;
+                    displayArtist.textContent = station.station;
+                }
+            }
+
+            function switchToStation(index) {
+                if (isSwitching) return;
+                isSwitching = true;
+
+                const station = STATIONS[index];
+                if (!station) {
+                    isSwitching = false;
+                    return;
+                }
+
+                currentIndex = index;
+                updateBackground(index);
+                updateDisplay(index);
+
+                startTrackUpdates(station.id);
+
+                audio.src = station.value;
+                audio.load();
+
+                if (isPlaying) {
                     audio.play()
                         .then(() => {
-                            isPlaying = true;
-                            updatePlayButton(true);
                             vinylDisc.style.animationPlayState = 'running';
-                        })
-                        .catch((e) => {
-                            console.warn('Play error:', e.message);
-                        });
-                } else {
-                    audio.src = station.value;
-                    audio.load();
-                    audio.play()
-                        .then(() => {
-                            isPlaying = true;
-                            updatePlayButton(true);
-                            vinylDisc.style.animationPlayState = 'running';
+                            isSwitching = false;
                         })
                         .catch((e) => {
                             console.warn('Play error:', e.message);
                             isPlaying = false;
                             updatePlayButton(false);
                             vinylDisc.style.animationPlayState = 'paused';
+                            isSwitching = false;
                         });
+                } else {
+                    isSwitching = false;
                 }
             }
-        }
 
-        function switchStation(direction) {
-            if (!swiper) return;
-            direction === 1 ? swiper.slideNext() : swiper.slidePrev();
-        }
+            function togglePlay() {
+                if (isPlaying) {
+                    audio.pause();
+                    isPlaying = false;
+                    updatePlayButton(false);
+                    vinylDisc.style.animationPlayState = 'paused';
+                } else {
+                    const station = STATIONS[currentIndex];
+                    if (!station) return;
 
-        function updatePlayButton(playing) {
-            if (playing) {
-                playIcon.className = 'fas fa-pause';
-                playBtn.classList.add('active');
-            } else {
-                playIcon.className = 'fas fa-play';
-                playBtn.classList.remove('active');
-            }
-        }
-
-        function init() {
-            buildSlider();
-            updateBackground(0);
-            updateDisplay(0);
-            updatePlayButton(false);
-
-            // Простая громкость (работает на ПК и Android)
-            audio.volume = parseFloat(volumeSlider.value);
-
-            setTimeout(() => {
-                if (swiper) {
-                    swiper.slideToLoop(0, 0);
+                    if (audio.src && audio.src === station.value) {
+                        audio.play()
+                            .then(() => {
+                                isPlaying = true;
+                                updatePlayButton(true);
+                                vinylDisc.style.animationPlayState = 'running';
+                            })
+                            .catch((e) => {
+                                console.warn('Play error:', e.message);
+                            });
+                    } else {
+                        audio.src = station.value;
+                        audio.load();
+                        audio.play()
+                            .then(() => {
+                                isPlaying = true;
+                                updatePlayButton(true);
+                                vinylDisc.style.animationPlayState = 'running';
+                            })
+                            .catch((e) => {
+                                console.warn('Play error:', e.message);
+                                isPlaying = false;
+                                updatePlayButton(false);
+                                vinylDisc.style.animationPlayState = 'paused';
+                            });
+                    }
                 }
-            }, 100);
+            }
 
-            playBtn.addEventListener('click', togglePlay);
-            prevBtn.addEventListener('click', () => switchStation(-1));
-            nextBtn.addEventListener('click', () => switchStation(1));
+            function switchStation(direction) {
+                if (!swiper) return;
+                direction === 1 ? swiper.slideNext() : swiper.slidePrev();
+            }
 
-            volumeSlider.addEventListener('input', (e) => {
-                audio.volume = parseFloat(e.target.value);
-            });
+            function updatePlayButton(playing) {
+                if (playing) {
+                    playIcon.className = 'fas fa-pause';
+                    playBtn.classList.add('active');
+                } else {
+                    playIcon.className = 'fas fa-play';
+                    playBtn.classList.remove('active');
+                }
+            }
 
-            audio.addEventListener('error', () => {
-                isPlaying = false;
+            function init() {
+                buildSlider();
+                updateBackground(0);
+                updateDisplay(0);
                 updatePlayButton(false);
-                vinylDisc.style.animationPlayState = 'paused';
-            });
-        }
 
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
+                startTrackUpdates(STATIONS[4].id);
 
-    })();
-</script>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js');
-  }
-</script>
+                audio.volume = parseFloat(volumeSlider.value);
+
+                setTimeout(() => {
+                    if (swiper) {
+                        swiper.slideToLoop(0, 0);
+                    }
+                }, 100);
+
+                playBtn.addEventListener('click', togglePlay);
+                prevBtn.addEventListener('click', () => switchStation(-1));
+                nextBtn.addEventListener('click', () => switchStation(1));
+
+                volumeSlider.addEventListener('input', (e) => {
+                    audio.volume = parseFloat(e.target.value);
+                });
+
+                audio.addEventListener('error', () => {
+                    isPlaying = false;
+                    updatePlayButton(false);
+                    vinylDisc.style.animationPlayState = 'paused';
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+      }
+    </script>
 </body>
 </html>
