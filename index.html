@@ -472,43 +472,44 @@
 
             // ===== ПОЛУЧЕНИЕ ТРЕКА ИЗ channels.xml =====
             async function fetchTrackFromXML(stationId) {
-                if (!stationId) return;
-                try {
-                    const proxyUrl = `https://api.allorigins.win/raw?url=https://somafm.com/channels.xml`;
-                    const response = await fetch(proxyUrl);
-                    if (!response.ok) throw new Error('Network error');
-                    const xmlText = await response.text();
-                    const parser = new DOMParser();
-                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-                    
-                    const channel = xmlDoc.querySelector(`channel[id="${stationId}"]`);
-                    if (!channel) {
-                        console.warn('Station not found in XML:', stationId);
-                        nowTrackTitle.textContent = '--';
-                        nowTrackArtist.textContent = '--';
-                        return;
-                    }
-                    
-                    const lastPlaying = channel.querySelector('lastPlaying')?.textContent || '';
-                    if (lastPlaying) {
-                        const parts = lastPlaying.split(' - ');
-                        if (parts.length > 1) {
-                            nowTrackArtist.textContent = parts[0].trim();
-                            nowTrackTitle.textContent = parts.slice(1).join(' - ').trim();
-                        } else {
-                            nowTrackTitle.textContent = lastPlaying.trim();
-                            nowTrackArtist.textContent = '';
-                        }
-                    } else {
-                        nowTrackTitle.textContent = '--';
-                        nowTrackArtist.textContent = '--';
-                    }
-                } catch (error) {
-                    console.warn('XML fetch error:', error);
-                    nowTrackTitle.textContent = 'Track info unavailable';
-                    nowTrackArtist.textContent = '';
-                }
+    if (!stationId) return;
+    try {
+        // Используем corsproxy.io вместо allorigins
+        const proxyUrl = `https://corsproxy.io/?url=https://somafm.com/channels.xml`;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error('Network error');
+        const xmlText = await response.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+        
+        const channel = xmlDoc.querySelector(`channel[id="${stationId}"]`);
+        if (!channel) {
+            console.warn('Station not found in XML:', stationId);
+            nowTrackTitle.textContent = '--';
+            nowTrackArtist.textContent = '--';
+            return;
+        }
+        
+        const lastPlaying = channel.querySelector('lastPlaying')?.textContent || '';
+        if (lastPlaying) {
+            const parts = lastPlaying.split(' - ');
+            if (parts.length > 1) {
+                nowTrackArtist.textContent = parts[0].trim();
+                nowTrackTitle.textContent = parts.slice(1).join(' - ').trim();
+            } else {
+                nowTrackTitle.textContent = lastPlaying.trim();
+                nowTrackArtist.textContent = '';
             }
+        } else {
+            nowTrackTitle.textContent = '--';
+            nowTrackArtist.textContent = '--';
+        }
+    } catch (error) {
+        console.warn('XML fetch error:', error);
+        nowTrackTitle.textContent = 'Track info unavailable';
+        nowTrackArtist.textContent = '';
+    }
+}
 
             function startTrackUpdates(stationId) {
                 if (trackUpdateInterval) {
