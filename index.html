@@ -43,9 +43,20 @@
             height: 100dvh;
             padding: 20px 20px 20px;
             background: radial-gradient(ellipse at 50% 30%, #1a1a2e, #0a0a0a);
+            background-size: 100% 100%;
             transition: background 1.8s ease;
             position: relative;
+            animation: breathe 4s ease-in-out infinite alternate;
         }
+
+@keyframes breathe {
+    0% {
+        background-size: 100% 100%;
+    }
+    100% {
+        background-size: 110% 110%;
+    }
+}
 
         .slider-container {
             flex-shrink: 0;
