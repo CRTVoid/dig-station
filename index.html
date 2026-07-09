@@ -137,7 +137,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* --- НОВЫЙ БЛОК ДЛЯ ТРЕКА --- */
+        /* НОВЫЙ БЛОК ДЛЯ ТРЕКА */
         .now-playing {
             flex-shrink: 0;
             text-align: center;
@@ -390,7 +390,7 @@
             <div class="artist" id="displayArtist">SomaFM · Chillout</div>
         </div>
 
-        <!-- НОВЫЙ БЛОК ДЛЯ ОТОБРАЖЕНИЯ ТРЕКА -->
+        <!-- НОВЫЙ БЛОК ДЛЯ ТРЕКА -->
         <div class="now-playing" id="nowPlaying">
             <div class="track-title" id="nowTrackTitle">--</div>
             <div class="track-artist" id="nowTrackArtist">--</div>
@@ -472,54 +472,64 @@
             let isPlaying = false;
             let swiper = null;
             let isSwitching = false;
+
+            // --- JSONP-запрос (без CORS) ---
+            function fetchTrackViaJsonp(stationId) {
+                if (!stationId) return;
+                
+                const callbackName = 'jsonpCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                const script = document.createElement('script');
+                const url = `https://api.somafm.com/songhistory/${stationId}?callback=${callbackName}`;
+                
+                window[callbackName] = function(data) {
+                    if (data && data.length > 0) {
+                        const lastTrack = data[0];
+                        nowTrackTitle.textContent = lastTrack.title || 'Unknown Track';
+                        nowTrackArtist.textContent = lastTrack.artist || 'Unknown Artist';
+                    } else {
+                        nowTrackTitle.textContent = 'No data';
+                        nowTrackArtist.textContent = '';
+                    }
+                    if (document.head.contains(script)) {
+                        document.head.removeChild(script);
+                    }
+                    delete window[callbackName];
+                };
+                
+                script.src = url;
+                script.onerror = function() {
+                    nowTrackTitle.textContent = 'Track info unavailable';
+                    nowTrackArtist.textContent = '';
+                    if (document.head.contains(script)) {
+                        document.head.removeChild(script);
+                    }
+                    delete window[callbackName];
+                };
+                
+                document.head.appendChild(script);
+            }
+
             let trackUpdateInterval = null;
 
-            // --- ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ТРЕКА ---
-            async function updateTrackInfo(stationId) {
-            if (!stationId) return;
-            try {
-            // Используем прокси для обхода CORS
-            const proxyUrl = `https://api.allorigins.win/raw?url=https://api.somafm.com/songhistory/${stationId}`;
-            const response = await fetch(proxyUrl);
-        
-            if (!response.ok) throw new Error('Network error');
-            const data = await response.json();
-
-            if (data && data.length > 0) {
-            const lastTrack = data[0];
-                nowTrackTitle.textContent = lastTrack.title || 'Unknown Track';
-                nowTrackArtist.textContent = lastTrack.artist || 'Unknown Artist';
-            } else {
-            nowTrackTitle.textContent = 'No data';
-            nowTrackArtist.textContent = '';
-        }
-    } catch (error) {
-        console.warn('Track fetch error:', error);
-        nowTrackTitle.textContent = 'Track info unavailable';
-        nowTrackArtist.textContent = '';
-    }
-}
-
             function startTrackUpdates(stationId) {
-                // Останавливаем старый интервал
                 if (trackUpdateInterval) {
                     clearInterval(trackUpdateInterval);
                     trackUpdateInterval = null;
                 }
 
-                // Если станция не Underground 80s — показываем заглушку и не обновляем
+                // Показываем трек только для u80s
                 if (stationId !== 'u80s') {
                     nowTrackTitle.textContent = '--';
                     nowTrackArtist.textContent = '--';
                     return;
                 }
 
-                // Сразу обновляем
-                updateTrackInfo(stationId);
+                // Первый запрос сразу
+                fetchTrackViaJsonp(stationId);
 
-                // Запускаем интервал (каждые 15 секунд)
+                // Обновляем каждые 15 секунд
                 trackUpdateInterval = setInterval(() => {
-                    updateTrackInfo(stationId);
+                    fetchTrackViaJsonp(stationId);
                 }, 15000);
             }
 
@@ -706,8 +716,7 @@
                 updateDisplay(0);
                 updatePlayButton(false);
 
-                // Запускаем обновление трека для начальной станции (Underground 80s — индекс 4)
-                // но показываем только если это u80s
+                // Запускаем обновление трека для Underground 80s (индекс 4)
                 startTrackUpdates(STATIONS[4].id);
 
                 audio.volume = parseFloat(volumeSlider.value);
