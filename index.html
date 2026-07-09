@@ -43,20 +43,46 @@
             height: 100dvh;
             padding: 20px 20px 20px;
             background: radial-gradient(ellipse at 50% 30%, #1a1a2e, #0a0a0a);
-            background-size: 100% 100%;
             transition: background 1.8s ease;
             position: relative;
-            animation: breathe 4s ease-in-out infinite alternate;
         }
 
-@keyframes breathe {
-    0% {
-        background-size: 100% 100%;
-    }
-    100% {
-        background-size: 110% 110%;
-    }
-}
+        /* ===== ПЕРЕЛИВАЮЩИЙСЯ ФОН (ВТОРОЙ ВАРИАНТ) ===== */
+        #app::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background: conic-gradient(
+                from 0deg,
+                rgba(255,255,255,0.0) 0%,
+                rgba(255,255,255,0.02) 25%,
+                rgba(255,255,255,0.0) 50%,
+                rgba(255,255,255,0.02) 75%,
+                rgba(255,255,255,0.0) 100%
+            );
+            animation: rotateGradient 12s linear infinite;
+            animation-play-state: paused;
+            pointer-events: none;
+            opacity: 0.5;
+            transition: opacity 0.4s ease;
+        }
+
+        #app.playing::before {
+            animation-play-state: running;
+            opacity: 0.7;
+        }
+
+        @keyframes rotateGradient {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Все дочерние элементы должны быть поверх псевдо-элемента */
+        #app > * {
+            position: relative;
+            z-index: 1;
+        }
 
         .slider-container {
             flex-shrink: 0;
@@ -401,8 +427,6 @@
             <div class="artist" id="displayArtist">SomaFM · Chillout</div>
         </div>
 
-        
-
         <section class="vinyl-container">
             <div class="vinyl" id="vinyl">
                 <div class="vinyl-disc" id="vinylDisc">
@@ -410,7 +434,6 @@
                 </div>
             </div>
         </section>
-
 
         <div class="now-playing" id="nowPlaying">
             <div class="track-title" id="nowTrackTitle">--</div>
@@ -672,6 +695,7 @@
                     isPlaying = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
+                    app.classList.remove('playing'); // убираем перелив
                 } else {
                     const station = STATIONS[currentIndex];
                     if (!station) return;
@@ -682,6 +706,7 @@
                                 isPlaying = true;
                                 updatePlayButton(true);
                                 vinylDisc.style.animationPlayState = 'running';
+                                app.classList.add('playing'); // включаем перелив
                             })
                             .catch((e) => {
                                 console.warn('Play error:', e.message);
@@ -694,12 +719,14 @@
                                 isPlaying = true;
                                 updatePlayButton(true);
                                 vinylDisc.style.animationPlayState = 'running';
+                                app.classList.add('playing'); // включаем перелив
                             })
                             .catch((e) => {
                                 console.warn('Play error:', e.message);
                                 isPlaying = false;
                                 updatePlayButton(false);
                                 vinylDisc.style.animationPlayState = 'paused';
+                                app.classList.remove('playing');
                             });
                     }
                 }
@@ -748,6 +775,7 @@
                     isPlaying = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
+                    app.classList.remove('playing');
                 });
             }
 
