@@ -137,6 +137,7 @@
             letter-spacing: 0.5px;
         }
 
+        /* --- НОВЫЙ БЛОК ДЛЯ ТРЕКА --- */
         .now-playing {
             flex-shrink: 0;
             text-align: center;
@@ -389,6 +390,7 @@
             <div class="artist" id="displayArtist">SomaFM · Chillout</div>
         </div>
 
+        <!-- НОВЫЙ БЛОК ДЛЯ ТРЕКА -->
         <div class="now-playing" id="nowPlaying">
             <div class="track-title" id="nowTrackTitle">--</div>
             <div class="track-artist" id="nowTrackArtist">--</div>
@@ -470,36 +472,44 @@
             let isSwitching = false;
             let trackUpdateInterval = null;
 
-            // ===== JSONP-ЗАПРОС =====
-            function fetchTrackViaJsonp(stationId) {
+            // ===== НОВЫЙ МЕТОД: ПОЛУЧЕНИЕ ТРЕКА ИЗ channels.xml =====
+            async function fetchTrackFromXML(stationId) {
                 if (!stationId) return;
-                
-                const callbackName = 'jsonpCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-                const script = document.createElement('script');
-                const url = `https://api.somafm.com/songhistory/${stationId}?callback=${callbackName}`;
-                
-                window[callbackName] = function(data) {
-                    if (data && data.length > 0) {
-                        const lastTrack = data[0];
-                        nowTrackTitle.textContent = lastTrack.title || 'Unknown Track';
-                        nowTrackArtist.textContent = lastTrack.artist || 'Unknown Artist';
-                    } else {
-                        nowTrackTitle.textContent = 'No data';
-                        nowTrackArtist.textContent = '';
+                try {
+                    const proxyUrl = `https://api.allorigins.win/raw?url=https://somafm.com/channels.xml`;
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error('Network error');
+                    const xmlText = await response.text();
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                    
+                    const channel = xmlDoc.querySelector(`channel[id="${stationId}"]`);
+                    if (!channel) {
+                        console.warn('Station not found in XML:', stationId);
+                        nowTrackTitle.textContent = '--';
+                        nowTrackArtist.textContent = '--';
+                        return;
                     }
-                    document.head.removeChild(script);
-                    delete window[callbackName];
-                };
-                
-                script.src = url;
-                script.onerror = function() {
+                    
+                    const lastPlaying = channel.querySelector('lastPlaying')?.textContent || '';
+                    if (lastPlaying) {
+                        const parts = lastPlaying.split(' - ');
+                        if (parts.length > 1) {
+                            nowTrackArtist.textContent = parts[0].trim();
+                            nowTrackTitle.textContent = parts.slice(1).join(' - ').trim();
+                        } else {
+                            nowTrackTitle.textContent = lastPlaying.trim();
+                            nowTrackArtist.textContent = '';
+                        }
+                    } else {
+                        nowTrackTitle.textContent = '--';
+                        nowTrackArtist.textContent = '--';
+                    }
+                } catch (error) {
+                    console.warn('XML fetch error:', error);
                     nowTrackTitle.textContent = 'Track info unavailable';
                     nowTrackArtist.textContent = '';
-                    document.head.removeChild(script);
-                    delete window[callbackName];
-                };
-                
-                document.head.appendChild(script);
+                }
             }
 
             function startTrackUpdates(stationId) {
@@ -509,9 +519,9 @@
                 }
 
                 if (stationId === 'u80s') {
-                    fetchTrackViaJsonp(stationId);
+                    fetchTrackFromXML(stationId);
                     trackUpdateInterval = setInterval(() => {
-                        fetchTrackViaJsonp(stationId);
+                        fetchTrackFromXML(stationId);
                     }, 15000);
                 } else {
                     nowTrackTitle.textContent = '--';
@@ -727,7 +737,7 @@
             }
 
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', init);
+                document.addEventListener('documentLoaded', init);
             } else {
                 init();
             }
