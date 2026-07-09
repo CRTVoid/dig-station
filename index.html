@@ -476,26 +476,29 @@
 
             // --- ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ТРЕКА ---
             async function updateTrackInfo(stationId) {
-                if (!stationId) return;
-                try {
-                    const response = await fetch(`https://api.somafm.com/songhistory/${stationId}`);
-                    if (!response.ok) throw new Error('Network error');
-                    const data = await response.json();
+            if (!stationId) return;
+            try {
+            // Используем прокси для обхода CORS
+            const proxyUrl = `https://api.allorigins.win/raw?url=https://api.somafm.com/songhistory/${stationId}`;
+            const response = await fetch(proxyUrl);
+        
+            if (!response.ok) throw new Error('Network error');
+            const data = await response.json();
 
-                    if (data && data.length > 0) {
-                        const lastTrack = data[0];
-                        nowTrackTitle.textContent = lastTrack.title || 'Unknown Track';
-                        nowTrackArtist.textContent = lastTrack.artist || 'Unknown Artist';
-                    } else {
-                        nowTrackTitle.textContent = 'No data';
-                        nowTrackArtist.textContent = '';
-                    }
-                } catch (error) {
-                    console.warn('Track fetch error:', error);
-                    nowTrackTitle.textContent = 'Track info unavailable';
-                    nowTrackArtist.textContent = '';
-                }
-            }
+            if (data && data.length > 0) {
+            const lastTrack = data[0];
+                nowTrackTitle.textContent = lastTrack.title || 'Unknown Track';
+                nowTrackArtist.textContent = lastTrack.artist || 'Unknown Artist';
+            } else {
+            nowTrackTitle.textContent = 'No data';
+            nowTrackArtist.textContent = '';
+        }
+    } catch (error) {
+        console.warn('Track fetch error:', error);
+        nowTrackTitle.textContent = 'Track info unavailable';
+        nowTrackArtist.textContent = '';
+    }
+}
 
             function startTrackUpdates(stationId) {
                 // Останавливаем старый интервал
