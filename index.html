@@ -327,15 +327,15 @@
             transform: translate(-50%, 50%);
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(10px);
-            padding: 18px 28px;
-            border-radius: 14px;
-            font-size: 17px;
+            padding: 16px 32px; /* уменьшен размер */
+            border-radius: 16px; /* увеличен border-radius */
+            font-size: 16px; /* уменьшен шрифт */
             font-weight: 600;
             opacity: 0;
             transition: opacity 0.25s ease;
             pointer-events: none;
             z-index: 1000;
-            min-width: 160px;
+            min-width: 180px; /* шире */
             text-align: center;
             border: 1px solid rgba(255,255,255,0.08);
             letter-spacing: 0.3px;
@@ -348,13 +348,13 @@
         .volume-indicator .vol-icon {
             margin-right: 10px;
             opacity: 0.5;
-            font-size: 16px;
+            font-size: 15px;
         }
 
         .volume-indicator .vol-level {
             display: inline-block;
             min-width: 42px;
-            opacity: 0.85; /* уменьшена прозрачность на 15% (было 1.0) */
+            opacity: 0.75; /* изменена прозрачность */
         }
 
         .volume-indicator .vol-bar {
@@ -368,7 +368,7 @@
 
         .volume-indicator .vol-bar-fill {
             height: 100%;
-            background: #ef4444; /* красный цвет */
+            background: #ef4444;
             border-radius: 3px;
             transition: width 0.1s ease;
             width: 70%;
@@ -394,11 +394,12 @@
             .volume-track { height: 90px; }
             .volume-track input { width: 90px; }
             .volume-indicator {
-                padding: 14px 20px;
-                font-size: 14px;
-                min-width: 120px;
+                padding: 12px 24px;
+                font-size: 13px;
+                min-width: 140px;
+                border-radius: 14px;
             }
-            .volume-indicator .vol-icon { font-size: 14px; }
+            .volume-indicator .vol-icon { font-size: 13px; }
             .volume-indicator .vol-level { min-width: 34px; }
         }
 
@@ -421,11 +422,12 @@
             .volume-track { height: 70px; }
             .volume-track input { width: 70px; }
             .volume-indicator {
-                padding: 10px 16px;
-                font-size: 12px;
-                min-width: 100px;
+                padding: 10px 20px;
+                font-size: 11px;
+                min-width: 110px;
+                border-radius: 12px;
             }
-            .volume-indicator .vol-icon { font-size: 12px; margin-right: 6px; }
+            .volume-indicator .vol-icon { font-size: 11px; margin-right: 6px; }
             .volume-indicator .vol-level { min-width: 28px; }
         }
 
@@ -582,13 +584,13 @@
                 // Показываем индикатор
                 volumeIndicator.classList.add('visible');
                 
-                // Скрываем через 0.8 секунды
+                // Скрываем через 0.7 секунды
                 if (volumeIndicatorTimeout) {
                     clearTimeout(volumeIndicatorTimeout);
                 }
                 volumeIndicatorTimeout = setTimeout(() => {
                     volumeIndicator.classList.remove('visible');
-                }, 800);
+                }, 700);
             }
 
             function changeVolume(delta) {
@@ -971,7 +973,7 @@
                     }
                     volumeIndicatorTimeout = setTimeout(() => {
                         volumeIndicator.classList.remove('visible');
-                    }, 800);
+                    }, 700);
                 });
 
                 audio.addEventListener('error', () => {
