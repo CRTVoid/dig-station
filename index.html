@@ -478,7 +478,7 @@
             const nowTrackTitle = $('#nowTrackTitle');
             const nowTrackArtist = $('#nowTrackArtist');
 
-            let currentIndex = 5;
+            let currentIndex = 0;
             let isPlaying = false;
             let swiper = null;
             let isSwitching = false;
@@ -721,17 +721,17 @@
 
             function init() {
                 buildSlider();
-                updateBackground(0);
-                updateDisplay(0);
+                updateBackground(4);
+                updateDisplay(4);
                 updatePlayButton(false);
 
-                startTrackUpdates(STATIONS[0].id);
+                startTrackUpdates(STATIONS[4].id);
 
                 audio.volume = parseFloat(volumeSlider.value);
 
                 setTimeout(() => {
                     if (swiper) {
-                        swiper.slideToLoop(0, 0);
+                        swiper.slideToLoop(4, 0);
                     }
                 }, 100);
 
