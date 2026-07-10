@@ -479,11 +479,13 @@
             const nowTrackArtist = $('#nowTrackArtist');
 
             let currentIndex = 0;
+            let targetIndex = 0;
             let isPlaying = false;
             let swiper = null;
             let isSwitching = false;
-            let switchTimeout = null;
+            let pendingSwitch = null;
             let trackUpdateInterval = null;
+            let isSwiperProgrammatic = false;
 
             // ===== ПОЛУЧЕНИЕ ТРЕКА ИЗ channels.xml (с обновлением) =====
             async function fetchTrackFromXML(stationId) {
@@ -565,9 +567,10 @@
                     centeredSlides: true,
                     loop: true,
                     spaceBetween: 4,
-                    speed: 500,
+                    speed: 400,
                     allowTouchMove: true,
                     watchSlidesProgress: true,
+                    threshold: 10,
                     
                     breakpoints: {
                         1024: {
@@ -586,43 +589,129 @@
                     
                     on: {
                         slideChange: function() {
-                            const realIndex = this.realIndex;
-                            if (realIndex !== currentIndex && !isSwitching) {
-                                switchToStation(realIndex);
+                            if (!isSwiperProgrammatic) {
+                                const realIndex = this.realIndex;
+                                if (realIndex !== currentIndex) {
+                                    requestSwitch(realIndex);
+                                }
                             }
                         },
                         slideChangeTransitionStart: function() {
-                            // Блокируем клики во время анимации свайпера
-                            isSwitching = true;
-                            if (switchTimeout) {
-                                clearTimeout(switchTimeout);
+                            // Блокируем только если это не программное переключение
+                            if (!isSwiperProgrammatic) {
+                                isSwitching = true;
                             }
                         },
                         slideChangeTransitionEnd: function() {
-                            // Разблокируем после завершения анимации
-                            if (switchTimeout) {
-                                clearTimeout(switchTimeout);
-                            }
-                            switchTimeout = setTimeout(() => {
+                            if (!isSwiperProgrammatic) {
                                 isSwitching = false;
-                                switchTimeout = null;
-                            }, 100);
+                                // Проверяем, не накопился ли pending запрос
+                                if (pendingSwitch !== null && pendingSwitch !== currentIndex) {
+                                    const pending = pendingSwitch;
+                                    pendingSwitch = null;
+                                    requestSwitch(pending);
+                                }
+                            }
+                            isSwiperProgrammatic = false;
+                        },
+                        touchStart: function() {
+                            // При касании отменяем все программные переключения
+                            if (pendingSwitch !== null) {
+                                pendingSwitch = null;
+                            }
                         }
                     }
                 });
 
                 document.querySelectorAll('.swiper-slide').forEach((slide) => {
                     slide.addEventListener('click', function(e) {
-                        if (isSwitching) {
-                            e.preventDefault();
-                            return;
-                        }
                         const index = parseInt(this.dataset.index);
                         if (!isNaN(index) && swiper) {
-                            swiper.slideToLoop(index);
+                            // Проверяем, не пытаемся ли переключиться на ту же станцию
+                            if (index === currentIndex && isPlaying) {
+                                return;
+                            }
+                            // Используем requestSwitch для плавного переключения
+                            requestSwitch(index);
                         }
                     });
                 });
+            }
+
+            // Очередь запросов на переключение
+            function requestSwitch(index) {
+                // Если уже переключаемся, сохраняем запрос в pending
+                if (isSwitching) {
+                    pendingSwitch = index;
+                    return;
+                }
+
+                // Если запрос на ту же станцию, игнорируем
+                if (index === currentIndex) {
+                    return;
+                }
+
+                // Выполняем переключение
+                performSwitch(index);
+            }
+
+            function performSwitch(index) {
+                if (isSwitching) return;
+                
+                const station = STATIONS[index];
+                if (!station) return;
+
+                // Устанавливаем флаг блокировки
+                isSwitching = true;
+                isSwiperProgrammatic = true;
+
+                // Сохраняем целевой индекс
+                targetIndex = index;
+
+                // Обновляем UI
+                updateBackground(index);
+                updateDisplay(index);
+                startTrackUpdates(station.id);
+
+                // Переключаем аудио
+                const wasPlaying = isPlaying;
+                audio.src = station.value;
+                audio.load();
+
+                // Обновляем индекс после загрузки
+                currentIndex = index;
+
+                // Если нужно продолжить воспроизведение
+                if (wasPlaying) {
+                    audio.play()
+                        .then(() => {
+                            vinylDisc.style.animationPlayState = 'running';
+                        })
+                        .catch((e) => {
+                            console.warn('Play error:', e.message);
+                            isPlaying = false;
+                            updatePlayButton(false);
+                            vinylDisc.style.animationPlayState = 'paused';
+                        });
+                }
+
+                // Плавно переключаем свайпер к выбранной станции
+                if (swiper) {
+                    swiper.slideToLoop(index, 400);
+                }
+
+                // Снимаем блокировку через время анимации
+                setTimeout(() => {
+                    isSwitching = false;
+                    // Проверяем, не накопился ли новый запрос
+                    if (pendingSwitch !== null && pendingSwitch !== currentIndex) {
+                        const pending = pendingSwitch;
+                        pendingSwitch = null;
+                        requestSwitch(pending);
+                    } else {
+                        pendingSwitch = null;
+                    }
+                }, 500);
             }
 
             function updateBackground(index) {
@@ -647,59 +736,6 @@
                 if (station) {
                     displayTrack.textContent = station.track;
                     displayArtist.textContent = station.station;
-                }
-            }
-
-            function switchToStation(index) {
-                if (isSwitching) return;
-                isSwitching = true;
-
-                // Очищаем предыдущий таймаут
-                if (switchTimeout) {
-                    clearTimeout(switchTimeout);
-                }
-
-                const station = STATIONS[index];
-                if (!station) {
-                    isSwitching = false;
-                    return;
-                }
-
-                currentIndex = index;
-                updateBackground(index);
-                updateDisplay(index);
-
-                startTrackUpdates(station.id);
-
-                audio.src = station.value;
-                audio.load();
-
-                if (isPlaying) {
-                    audio.play()
-                        .then(() => {
-                            vinylDisc.style.animationPlayState = 'running';
-                            // Разблокируем после завершения
-                            switchTimeout = setTimeout(() => {
-                                isSwitching = false;
-                                switchTimeout = null;
-                            }, 300);
-                        })
-                        .catch((e) => {
-                            console.warn('Play error:', e.message);
-                            isPlaying = false;
-                            updatePlayButton(false);
-                            vinylDisc.style.animationPlayState = 'paused';
-                            switchTimeout = setTimeout(() => {
-                                isSwitching = false;
-                                switchTimeout = null;
-                            }, 300);
-                        });
-                } else {
-                    // Если не играет, разблокируем через небольшую задержку
-                    switchTimeout = setTimeout(() => {
-                        isSwitching = false;
-                        switchTimeout = null;
-                    }, 300);
                 }
             }
 
@@ -746,7 +782,12 @@
 
             function switchStation(direction) {
                 if (isSwitching || !swiper) return;
-                direction === 1 ? swiper.slideNext() : swiper.slidePrev();
+                
+                const currentRealIndex = swiper.realIndex;
+                const newIndex = (currentRealIndex + direction + STATIONS.length) % STATIONS.length;
+                
+                // Используем requestSwitch для плавного переключения
+                requestSwitch(newIndex);
             }
 
             function updatePlayButton(playing) {
@@ -761,17 +802,25 @@
 
             function init() {
                 buildSlider();
+                
+                // Устанавливаем начальную станцию (индекс 4)
+                currentIndex = 4;
+                targetIndex = 4;
                 updateBackground(4);
                 updateDisplay(4);
                 updatePlayButton(false);
-
                 startTrackUpdates(STATIONS[4].id);
 
                 audio.volume = parseFloat(volumeSlider.value);
 
+                // Инициализируем свайпер на нужной позиции
                 setTimeout(() => {
                     if (swiper) {
+                        isSwiperProgrammatic = true;
                         swiper.slideToLoop(4, 0);
+                        setTimeout(() => {
+                            isSwiperProgrammatic = false;
+                        }, 50);
                     }
                 }, 100);
 
