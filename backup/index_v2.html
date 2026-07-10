@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="192x192.png">
+    <meta name="apple-mobile-web-app-title" content="dig station">
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="icon" type="icon" href="favicon.ico">
+    <title>Dig Station</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background: #0a0a0a;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #ffffff;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            user-select: none; /* Стандарт */
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE */
+            cursor: default;
+        }
+
+        img, a {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+            padding: 20px 20px 20px;
+            background: radial-gradient(ellipse at 50% 30%, #1a1a2e, #0a0a0a);
+            transition: background 1.8s ease;
+            position: relative;
+        }
+
+        .slider-container {
+            flex-shrink: 0;
+            height: 90px;
+            margin: 25px 0 4px 0;
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        .slider-container .swiper {
+            width: 100%;
+            height: 100%;
+        }
+
+        .slider-container .swiper-slide {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0.3;
+            transform: scale(0.95);
+            transition: all 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 12px;
+            background: transparent;
+        }
+
+        .slider-container .swiper-slide img {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
+            transition: all 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+            background: transparent;
+        }
+
+        .slider-container .swiper-slide-active {
+            opacity: 1;
+            transform: scale(1);
+            filter: blur(0);
+            background: transparent;
+            padding: 4px;
+            border-radius: 14px;
+        }
+
+        .slider-container .swiper-slide-active img {
+            width: 90px;
+            height: 90px;
+            border-radius: 14px;
+            box-shadow: 0 0 40px rgba(255,255,255,0.05);
+        }
+
+        .slider-container .swiper-slide-prev,
+        .slider-container .swiper-slide-next {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .slider-container .swiper-slide-prev img,
+        .slider-container .swiper-slide-next img {
+            width: 70px;
+            height: 70px;
+        }
+
+        .slider-container .swiper-slide:active {
+            transform: scale(0.94);
+            transition-duration: 0.05s;
+        }
+
+        .station-name-display {
+            flex-shrink: 0;
+            text-align: center;
+            padding: 6px 0 8px 0;
+            min-height: 28px;
+        }
+
+        .station-name-display .track {
+            font-size: 15px;
+            font-weight: 600;
+            opacity: 0.85;
+            letter-spacing: 0.3px;
+        }
+
+        .station-name-display .artist {
+            font-size: 12px;
+            opacity: 0.4;
+            margin-top: 1px;
+            letter-spacing: 0.5px;
+        }
+
+        .now-playing {
+            flex-shrink: 0;
+            text-align: center;
+            padding: 4px 0 8px 0;
+            min-height: 44px;
+            margin-bottom: 25px;
+        }
+
+        .now-playing .track-title {
+            font-size: 17px;
+            font-weight: 500;
+            opacity: 0.9;
+            letter-spacing: 0.2px;
+        }
+
+        .now-playing .track-artist {
+            font-size: 14px;
+            opacity: 0.5;
+            margin-top: 1px;
+            letter-spacing: 0.3px;
+        }
+
+        .vinyl-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 0;
+            padding: 0 0 4px 0;
+        }
+
+        .vinyl {
+            width: 360px;
+            height: 360px;
+            max-width: 78vw;
+            max-height: 78vw;
+            position: relative;
+            border-radius: 50%;
+            background: transparent;
+        }
+
+        .vinyl-disc {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            animation: spin 8s linear infinite;
+            animation-play-state: paused;
+            background: transparent;
+            overflow: visible;
+        }
+
+        .vinyl-disc img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 50%;
+            object-fit: contain;
+            opacity: 0.8;
+            transform: scale(0.8)
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+            padding: 2px 0 4px 0;
+            margin-top: -6px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            background: none;
+            border: none;
+            color: #fff;
+            padding: 6px;
+            cursor: pointer;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            font-size: 0.95rem;
+        }
+
+        .btn:active {
+            transform: scale(0.88);
+            opacity: 0.5;
+        }
+
+        .btn-play {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            opacity: 1;
+            padding: 0;
+            font-size: 1.5rem;
+        }
+
+        .btn-play:active {
+            background: rgba(255,255,255,0.12);
+            transform: scale(0.92);
+        }
+
+        .btn-play.active {
+            opacity: 1;
+        }
+
+        .btn-prev,
+        .btn-next {
+            font-size: 1.1rem;
+        }
+
+        .volume-wrapper {
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            opacity: 0.3;
+            transition: opacity 0.4s ease;
+        }
+
+        .volume-wrapper:active,
+        .volume-wrapper:focus-within {
+            opacity: 0.7;
+        }
+
+        .volume-track {
+            position: relative;
+            width: 20px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .volume-track input {
+            width: 120px;
+            height: 2px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 2px;
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            position: absolute;
+        }
+
+        .volume-track input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .volume-track input::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        @media (max-width: 420px) {
+            #app { padding: 16px 16px 16px; }
+            .slider-container { height: 72px; margin: 20px 0 2px 0; }
+            .slider-container .swiper-slide img { width: 44px; height: 44px; }
+            .slider-container .swiper-slide-active img { width: 60px; height: 60px; }
+            .station-name-display { padding: 4px 0 6px 0; }
+            .station-name-display .track { font-size: 13px; }
+            .station-name-display .artist { font-size: 11px; }
+            .now-playing { min-height: 36px; padding: 2px 0 6px 0; }
+            .now-playing .track-title { font-size: 13px; }
+            .now-playing .track-artist { font-size: 11px; }
+            .vinyl { width: 260px; height: 260px; max-width: 70vw; max-height: 70vw; }
+            .controls { gap: 12px; padding: 0 0 2px 0; margin-top: -4px; margin-bottom: 20px; }
+            .btn { width: 32px; height: 32px; padding: 4px; font-size: 0.8rem; }
+            .btn-play { width: 50px; height: 50px; font-size: 1.2rem; }
+            .btn-prev, .btn-next { font-size: 0.95rem; }
+            .volume-wrapper { right: 16px; }
+            .volume-track { height: 90px; }
+            .volume-track input { width: 90px; }
+        }
+
+        @media (max-width: 360px) {
+            .slider-container { height: 60px; margin: 16px 0 2px 0; }
+            .slider-container .swiper-slide img { width: 36px; height: 36px; }
+            .slider-container .swiper-slide-active img { width: 50px; height: 50px; }
+            .slider-container .swiper-slide-prev img,
+            .slider-container .swiper-slide-next img { width: 30px; height: 30px; }
+            .station-name-display .track { font-size: 12px; }
+            .station-name-display .artist { font-size: 10px; }
+            .now-playing .track-title { font-size: 12px; }
+            .now-playing .track-artist { font-size: 10px; }
+            .vinyl { width: 200px; height: 200px; max-width: 60vw; max-height: 60vw; }
+            .controls { gap: 8px; margin-bottom: 16px; }
+            .btn { width: 28px; height: 28px; font-size: 0.7rem; }
+            .btn-play { width: 42px; height: 42px; font-size: 1rem; }
+            .btn-prev, .btn-next { font-size: 0.8rem; }
+            .volume-wrapper { right: 12px; }
+            .volume-track { height: 70px; }
+            .volume-track input { width: 70px; }
+        }
+        @media (hover: none) and (pointer: coarse) {
+            .volume-wrapper { display: none; }
+        }
+
+        @media (orientation: landscape) and (max-width: 932px) {
+            .vinyl-container { display: none; }
+        }
+
+        @media (orientation: landscape) and (max-width: 932px) {
+            .now-playing { margin-bottom: 10px; margin-top: 60px; font-size: 0.7rem; }
+            .controls { transform: scale(0.8); }
+            .app { padding-bottom: none; }
+        }
+
+        @supports (padding: max(0px)) {
+            #app {
+                padding-left: max(20px, env(safe-area-inset-left));
+                padding-right: max(20px, env(safe-area-inset-right));
+                padding-bottom: max(20px, env(safe-area-inset-bottom));
+            }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="app">
+        <section class="slider-container">
+            <div class="swiper" id="stationSwiper">
+                <div class="swiper-wrapper" id="sliderWrapper"></div>
+            </div>
+        </section>
+
+        <div class="station-name-display" id="stationNameDisplay">
+            <div class="track" id="displayTrack">Groove Salad</div>
+            <div class="artist" id="displayArtist">SomaFM · Chillout</div>
+        </div>
+
+        <section class="vinyl-container">
+            <div class="vinyl" id="vinyl">
+                <div class="vinyl-disc" id="vinylDisc">
+                    <img src="vinyl.svg" alt="Vinyl Record">
+                </div>
+            </div>
+        </section>
+
+        <div class="now-playing" id="nowPlaying">
+            <div class="track-title" id="nowTrackTitle">--</div>
+            <div class="track-artist" id="nowTrackArtist">--</div>
+        </div>
+
+        <section class="controls">
+            <button class="btn btn-prev" id="prevBtn" aria-label="Previous">
+                <i class="fas fa-step-backward"></i>
+            </button>
+            <button class="btn btn-play" id="playBtn" aria-label="Play">
+                <i class="fas fa-play" id="playIcon"></i>
+            </button>
+            <button class="btn btn-next" id="nextBtn" aria-label="Next">
+                <i class="fas fa-step-forward"></i>
+            </button>
+        </section>
+
+        <div class="volume-wrapper">
+            <div class="volume-track">
+                <input type="range" class="volume-slider-vertical" id="volumeSlider" 
+                       min="0" max="1" step="0.05" value="0.7">
+            </div>
+        </div>
+
+        <audio id="audioPlayer" preload="none"></audio>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <script>
+
+    // Простой вариант
+    document.addEventListener('contextmenu', function(e) {
+    e.preventDefault(); // Запрещаем показ меню
+    // e.stopPropagation(); // Раскомментируйте, если нужно остановить всплытие
+    });
+
+    // Или однострочник для всего сайта:
+    document.oncontextmenu = () => false;
+        
+    </script>
+
+    <script>
+        (function() {
+            'use strict';
+
+            const STATIONS = [
+                { id: 'groovesalad', value: 'https://ice1.somafm.com/groovesalad-128-mp3', track: 'Groove Salad', station: 'SomaFM · Chillout', img: 'https://somafm.com/logos/400/groovesalad400.png' },
+                { id: 'darkzone', value: 'https://ice1.somafm.com/darkzone-128-mp3', track: 'The Dark Zone', station: 'SomaFM · Ambient', img: 'https://somafm.com/logos/400/darkzone400.jpg' },
+                { id: 'defcon', value: 'https://ice1.somafm.com/defcon-128-mp3', track: 'Def Con Radio', station: 'SomaFM · Dark Ambient', img: 'https://somafm.com/logos/400/defcon400.png' },
+                { id: 'metal', value: 'https://ice1.somafm.com/metal-128-mp3', track: 'Metal Detector', station: 'SomaFM · Heavy Metal', img: 'https://somafm.com/logos/400/metal400.png' },
+                { id: 'u80s', value: 'https://ice1.somafm.com/u80s-128-mp3', track: 'Underground 80s', station: 'SomaFM · 80s Underground', img: 'https://somafm.com/logos/400/u80s400.png' },
+                { id: '7soul', value: 'https://ice1.somafm.com/7soul-128-mp3', track: 'Seven Inch Soul', station: 'SomaFM · Soul Classics', img: 'https://somafm.com/logos/400/7soul400.jpg' },
+                { id: 'insound', value: 'https://ice1.somafm.com/insound-128-mp3', track: 'The In-Sound', station: 'SomaFM · 60s Garage', img: 'https://somafm.com/logos/400/insound-400.jpg' },
+                { id: 'covers', value: 'https://ice1.somafm.com/covers-128-mp3', track: 'Covers', station: 'SomaFM · Cover Versions', img: 'https://somafm.com/logos/400/covers400.png' },
+                { id: 'sf1033', value: 'https://ice1.somafm.com/sf1033-128-mp3', track: 'SF 10-33', station: 'SomaFM · Police Radio', img: 'https://somafm.com/logos/400/sf1033400.png' },
+                { id: 'scanner', value: 'https://ice1.somafm.com/scanner-128-mp3', track: 'SF Police Scanner', station: 'SomaFM · Live Scanner', img: 'https://somafm.com/logos/400/scanner400.jpg' },
+                { id: 'brfm', value: 'https://ice5.somafm.com/brfm-128-mp3', track: 'Black Rock FM', station: 'SomaFM · Dusty Endless Desert', img: 'https://somafm.com/logos/400/brfm400.png' },
+                { id: 'sfinsf', value: 'https://ice1.somafm.com/sfinsf-128-mp3', track: 'SF in SF', station: 'SomaFM · Live in SF', img: 'https://somafm.com/logos/400/sfinsf400.jpg' },
+                { id: 'vaporwaves', value: 'https://ice1.somafm.com/vaporwaves-128-mp3', track: 'Vaporwaves', station: 'SomaFM · Vaporwave', img: 'https://somafm.com/logos/400/vaporwaves400.png' },
+                { id: 'doomed', value: 'https://ice1.somafm.com/doomed-128-mp3', track: 'Doomed', station: 'SomaFM · Doom Metal', img: 'https://somafm.com/img3/doomed-400.png' },
+                { id: 'beatblender', value: 'https://ice1.somafm.com/beatblender-128-mp3', track: 'Beat Blender', station: 'SomaFM · Deep House', img: 'https://somafm.com/logos/400/beatblender400.png' },
+                { id: 'bootliquor', value: 'https://ice1.somafm.com/bootliquor-128-mp3', track: 'Boot Liquor', station: 'SomaFM · Americana', img: 'https://somafm.com/logos/400/bootliquor400.png' },
+            ];
+
+            const $ = (sel) => document.querySelector(sel);
+            const app = $('#app');
+            const vinylDisc = $('#vinylDisc');
+            const playBtn = $('#playBtn');
+            const playIcon = $('#playIcon');
+            const prevBtn = $('#prevBtn');
+            const nextBtn = $('#nextBtn');
+            const volumeSlider = $('#volumeSlider');
+            const audio = $('#audioPlayer');
+            const sliderWrapper = $('#sliderWrapper');
+            const displayTrack = $('#displayTrack');
+            const displayArtist = $('#displayArtist');
+            const nowTrackTitle = $('#nowTrackTitle');
+            const nowTrackArtist = $('#nowTrackArtist');
+
+            let currentIndex = 0;
+            let isPlaying = false;
+            let swiper = null;
+            let isSwitching = false;
+            let switchTimeout = null;
+            let trackUpdateInterval = null;
+            let isSwiperProgrammatic = false;
+            let lastSlideChangeIndex = -1;
+            let pendingIndex = -1;
+
+            // ===== ПОЛУЧЕНИЕ ТРЕКА ИЗ channels.xml (с обновлением) =====
+            async function fetchTrackFromXML(stationId) {
+                if (!stationId) return;
+                try {
+                    const proxyUrl = `https://corsproxy.io/?url=https://somafm.com/channels.xml?_=${Date.now()}`;
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error('Network error');
+                    const xmlText = await response.text();
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                    
+                    const channel = xmlDoc.querySelector(`channel[id="${stationId}"]`);
+                    if (!channel) {
+                        console.warn('Station not found in XML:', stationId);
+                        nowTrackTitle.textContent = '--';
+                        nowTrackArtist.textContent = '--';
+                        return;
+                    }
+                    
+                    const lastPlaying = channel.querySelector('lastPlaying')?.textContent || '';
+                    if (lastPlaying) {
+                        const parts = lastPlaying.split(' - ');
+                        if (parts.length > 1) {
+                            nowTrackArtist.textContent = parts[0].trim();
+                            nowTrackTitle.textContent = parts.slice(1).join(' - ').trim();
+                        } else {
+                            nowTrackTitle.textContent = lastPlaying.trim();
+                            nowTrackArtist.textContent = '';
+                        }
+                    } else {
+                        nowTrackTitle.textContent = '--';
+                        nowTrackArtist.textContent = '--';
+                    }
+                } catch (error) {
+                    console.warn('XML fetch error:', error);
+                    nowTrackTitle.textContent = 'Track info unavailable';
+                    nowTrackArtist.textContent = '';
+                }
+            }
+
+            // ===== ЗАПУСК ОБНОВЛЕНИЯ ДЛЯ ЛЮБОЙ СТАНЦИИ =====
+            function startTrackUpdates(stationId) {
+                if (trackUpdateInterval) {
+                    clearInterval(trackUpdateInterval);
+                    trackUpdateInterval = null;
+                }
+
+                const station = STATIONS.find(s => s.id === stationId);
+                if (station) {
+                    fetchTrackFromXML(stationId);
+                    trackUpdateInterval = setInterval(() => {
+                        fetchTrackFromXML(stationId);
+                    }, 15000);
+                } else {
+                    nowTrackTitle.textContent = '--';
+                    nowTrackArtist.textContent = '--';
+                }
+            }
+
+            function buildSlider() {
+                sliderWrapper.innerHTML = '';
+                STATIONS.forEach((station, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'swiper-slide';
+                    slide.dataset.index = index;
+                    
+                    const img = document.createElement('img');
+                    img.src = station.img;
+                    img.alt = station.track;
+                    img.loading = 'lazy';
+                    
+                    slide.appendChild(img);
+                    sliderWrapper.appendChild(slide);
+                });
+
+                swiper = new Swiper('#stationSwiper', {
+                    slidesPerView: 7,
+                    centeredSlides: true,
+                    loop: true,
+                    spaceBetween: 4,
+                    speed: 400,
+                    allowTouchMove: true,
+                    watchSlidesProgress: true,
+                    threshold: 5,
+                    
+                    breakpoints: {
+                        1024: {
+                            slidesPerView: 7,
+                            spaceBetween: 6
+                        },
+                        768: {
+                            slidesPerView: 5,
+                            spaceBetween: 4
+                        },
+                        0: {
+                            slidesPerView: 5,
+                            spaceBetween: 2
+                        }
+                    },
+                    
+                    on: {
+                        slideChange: function() {
+                            const realIndex = this.realIndex;
+                            if (!isSwiperProgrammatic) {
+                                lastSlideChangeIndex = realIndex;
+                            }
+                        },
+                        
+                        slideChangeTransitionEnd: function() {
+                            if (!isSwiperProgrammatic && !isSwitching) {
+                                const realIndex = this.realIndex;
+                                if (realIndex !== currentIndex) {
+                                    performSwitch(realIndex);
+                                }
+                            }
+                            isSwiperProgrammatic = false;
+                        },
+                        
+                        touchStart: function() {
+                            if (!isSwiperProgrammatic) {
+                                pendingIndex = -1;
+                            }
+                        },
+                        
+                        touchEnd: function() {
+                            if (!isSwiperProgrammatic && !isSwitching) {
+                                const realIndex = this.realIndex;
+                                if (realIndex !== currentIndex) {
+                                    setTimeout(() => {
+                                        if (!isSwitching && swiper) {
+                                            const finalIndex = swiper.realIndex;
+                                            if (finalIndex !== currentIndex) {
+                                                performSwitch(finalIndex);
+                                            }
+                                        }
+                                    }, 50);
+                                }
+                            }
+                        }
+                    }
+                });
+
+                document.querySelectorAll('.swiper-slide').forEach((slide) => {
+                    slide.addEventListener('click', function(e) {
+                        if (isSwitching) {
+                            e.preventDefault();
+                            return;
+                        }
+                        const index = parseInt(this.dataset.index);
+                        if (!isNaN(index) && swiper) {
+                            if (index === currentIndex && isPlaying) {
+                                return;
+                            }
+                            performSwitch(index);
+                        }
+                    });
+                });
+            }
+
+            function performSwitch(index) {
+                if (isSwitching) {
+                    pendingIndex = index;
+                    return;
+                }
+
+                if (index === currentIndex) {
+                    return;
+                }
+
+                const station = STATIONS[index];
+                if (!station) return;
+
+                isSwitching = true;
+                isSwiperProgrammatic = true;
+                
+                updateBackground(index);
+                updateDisplay(index);
+                startTrackUpdates(station.id);
+
+                const wasPlaying = isPlaying;
+                audio.src = station.value;
+                audio.load();
+
+                const oldIndex = currentIndex;
+                currentIndex = index;
+
+                if (wasPlaying) {
+                    audio.play()
+                        .then(() => {
+                            vinylDisc.style.animationPlayState = 'running';
+                        })
+                        .catch((e) => {
+                            console.warn('Play error:', e.message);
+                            isPlaying = false;
+                            updatePlayButton(false);
+                            vinylDisc.style.animationPlayState = 'paused';
+                        });
+                }
+
+                if (swiper) {
+                    swiper.slideToLoop(index, 400);
+                }
+
+                if (switchTimeout) {
+                    clearTimeout(switchTimeout);
+                }
+                switchTimeout = setTimeout(() => {
+                    isSwitching = false;
+                    isSwiperProgrammatic = false;
+                    switchTimeout = null;
+                    
+                    if (pendingIndex !== -1 && pendingIndex !== currentIndex) {
+                        const pending = pendingIndex;
+                        pendingIndex = -1;
+                        performSwitch(pending);
+                    } else {
+                        pendingIndex = -1;
+                    }
+                }, 500);
+            }
+
+            function updateBackground(index) {
+                const colors = [
+                    ['#1a3a2a', '#0a120e'], ['#2a2218', '#0f0c0a'],
+                    ['#2a1a30', '#0f0a12'], ['#2a1015', '#0e0608'],
+                    ['#2a1a3d', '#0f0a14'], ['#2a1f12', '#0f0b08'],
+                    ['#2a1f0d', '#0f0e08'], ['#2a1d14', '#0f0c0a'],
+                    ['#1a2a1a', '#0a0e0a'], ['#1a2a1a', '#0a0e0a'],
+                    ['#3a2a1a', '#120e08'], ['#2a181a', '#0f0a0a'],
+                    ['#4a1a5a', '#1a0a1a'], ['#1a1a1e', '#0a0a0c'],
+                    ['#2a1a3a', '#0e0a12'], ['#4a3628', '#1a140e'],
+                ];
+                const c = colors[index % colors.length];
+                if (c) {
+                    app.style.background = `radial-gradient(ellipse at 50% 50%, ${c[0]}, ${c[1]})`;
+                }
+            }
+
+            function updateDisplay(index) {
+                const station = STATIONS[index];
+                if (station) {
+                    displayTrack.textContent = station.track;
+                    displayArtist.textContent = station.station;
+                }
+            }
+
+            function togglePlay() {
+                if (isSwitching) return;
+
+                if (isPlaying) {
+                    audio.pause();
+                    isPlaying = false;
+                    updatePlayButton(false);
+                    vinylDisc.style.animationPlayState = 'paused';
+                } else {
+                    const station = STATIONS[currentIndex];
+                    if (!station) return;
+
+                    if (audio.src && audio.src === station.value) {
+                        audio.play()
+                            .then(() => {
+                                isPlaying = true;
+                                updatePlayButton(true);
+                                vinylDisc.style.animationPlayState = 'running';
+                            })
+                            .catch((e) => {
+                                console.warn('Play error:', e.message);
+                            });
+                    } else {
+                        audio.src = station.value;
+                        audio.load();
+                        audio.play()
+                            .then(() => {
+                                isPlaying = true;
+                                updatePlayButton(true);
+                                vinylDisc.style.animationPlayState = 'running';
+                            })
+                            .catch((e) => {
+                                console.warn('Play error:', e.message);
+                                isPlaying = false;
+                                updatePlayButton(false);
+                                vinylDisc.style.animationPlayState = 'paused';
+                            });
+                    }
+                }
+            }
+
+            function switchStation(direction) {
+                if (isSwitching || !swiper) return;
+                
+                const currentRealIndex = swiper.realIndex;
+                const newIndex = (currentRealIndex + direction + STATIONS.length) % STATIONS.length;
+                performSwitch(newIndex);
+            }
+
+            function updatePlayButton(playing) {
+                if (playing) {
+                    playIcon.className = 'fas fa-pause';
+                    playBtn.classList.add('active');
+                } else {
+                    playIcon.className = 'fas fa-play';
+                    playBtn.classList.remove('active');
+                }
+            }
+
+            // ===== ОБРАБОТЧИК КЛАВИШ =====
+            function handleKeydown(e) {
+                // Игнорируем, если событие происходит в поле ввода или текстовой области
+                const target = e.target;
+                if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+                    return;
+                }
+
+                switch (e.key) {
+                    case ' ':
+                    case 'Space':
+                        e.preventDefault(); // предотвращаем прокрутку страницы
+                        togglePlay();
+                        break;
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        switchStation(-1);
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        switchStation(1);
+                        break;
+                }
+            }
+
+            function init() {
+                buildSlider();
+                
+                currentIndex = 4;
+                updateBackground(4);
+                updateDisplay(4);
+                updatePlayButton(false);
+                startTrackUpdates(STATIONS[4].id);
+
+                audio.volume = parseFloat(volumeSlider.value);
+
+                setTimeout(() => {
+                    if (swiper) {
+                        isSwiperProgrammatic = true;
+                        swiper.slideToLoop(4, 0);
+                        setTimeout(() => {
+                            isSwiperProgrammatic = false;
+                        }, 50);
+                    }
+                }, 100);
+
+                playBtn.addEventListener('click', togglePlay);
+                prevBtn.addEventListener('click', () => switchStation(-1));
+                nextBtn.addEventListener('click', () => switchStation(1));
+
+                volumeSlider.addEventListener('input', (e) => {
+                    audio.volume = parseFloat(e.target.value);
+                });
+
+                audio.addEventListener('error', () => {
+                    isPlaying = false;
+                    updatePlayButton(false);
+                    vinylDisc.style.animationPlayState = 'paused';
+                });
+
+                // Добавляем обработчик событий клавиатуры
+                document.addEventListener('keydown', handleKeydown);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+</body>
+</html>
