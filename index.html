@@ -319,6 +319,58 @@
             cursor: pointer;
         }
 
+        /* Индикатор громкости */
+        .volume-indicator {
+            position: fixed;
+            bottom: 50%;
+            left: 50%;
+            transform: translate(-50%, 50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 20px 30px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 1000;
+            min-width: 120px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .volume-indicator.visible {
+            opacity: 1;
+        }
+
+        .volume-indicator .vol-icon {
+            margin-right: 12px;
+            opacity: 0.6;
+        }
+
+        .volume-indicator .vol-level {
+            display: inline-block;
+            min-width: 40px;
+        }
+
+        .volume-indicator .vol-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .volume-indicator .vol-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #60a5fa);
+            border-radius: 2px;
+            transition: width 0.1s ease;
+            width: 70%;
+        }
+
         @media (max-width: 420px) {
             #app { padding: 16px 16px 16px; }
             .slider-container { height: 72px; margin: 20px 0 2px 0; }
@@ -338,6 +390,7 @@
             .volume-wrapper { right: 16px; }
             .volume-track { height: 90px; }
             .volume-track input { width: 90px; }
+            .volume-indicator { padding: 14px 20px; font-size: 15px; min-width: 90px; }
         }
 
         @media (max-width: 360px) {
@@ -385,6 +438,17 @@
 <body>
 
     <div id="app">
+        <!-- Индикатор громкости -->
+        <div class="volume-indicator" id="volumeIndicator">
+            <div>
+                <span class="vol-icon"><i class="fas fa-volume-up"></i></span>
+                <span class="vol-level" id="volLevelText">70%</span>
+            </div>
+            <div class="vol-bar">
+                <div class="vol-bar-fill" id="volBarFill"></div>
+            </div>
+        </div>
+
         <section class="slider-container">
             <div class="swiper" id="stationSwiper">
                 <div class="swiper-wrapper" id="sliderWrapper"></div>
@@ -424,7 +488,7 @@
         <div class="volume-wrapper">
             <div class="volume-track">
                 <input type="range" class="volume-slider-vertical" id="volumeSlider" 
-                       min="0" max="1" step="0.05" value="0.7">
+                       min="0" max="1" step="0.01" value="0.7">
             </div>
         </div>
 
@@ -470,6 +534,9 @@
             const displayArtist = $('#displayArtist');
             const nowTrackTitle = $('#nowTrackTitle');
             const nowTrackArtist = $('#nowTrackArtist');
+            const volumeIndicator = $('#volumeIndicator');
+            const volLevelText = $('#volLevelText');
+            const volBarFill = $('#volBarFill');
 
             let currentIndex = 0;
             let isPlaying = false;
@@ -480,6 +547,37 @@
             let isSwiperProgrammatic = false;
             let lastSlideChangeIndex = -1;
             let pendingIndex = -1;
+            let volumeIndicatorTimeout = null;
+
+            // ===== УПРАВЛЕНИЕ ГРОМКОСТЬЮ =====
+            function setVolume(value) {
+                const clamped = Math.max(0, Math.min(1, value));
+                audio.volume = clamped;
+                volumeSlider.value = clamped;
+                updateVolumeIndicator(clamped);
+            }
+
+            function updateVolumeIndicator(value) {
+                const percent = Math.round(value * 100);
+                volLevelText.textContent = percent + '%';
+                volBarFill.style.width = percent + '%';
+                
+                // Показываем индикатор
+                volumeIndicator.classList.add('visible');
+                
+                // Скрываем через 1.2 секунды
+                if (volumeIndicatorTimeout) {
+                    clearTimeout(volumeIndicatorTimeout);
+                }
+                volumeIndicatorTimeout = setTimeout(() => {
+                    volumeIndicator.classList.remove('visible');
+                }, 1200);
+            }
+
+            function changeVolume(delta) {
+                const newVolume = Math.max(0, Math.min(1, audio.volume + delta));
+                setVolume(newVolume);
+            }
 
             // ===== ПОЛУЧЕНИЕ ТРЕКА ИЗ channels.xml (с обновлением) =====
             async function fetchTrackFromXML(stationId) {
@@ -664,7 +762,6 @@
                 audio.src = station.value;
                 audio.load();
 
-                const oldIndex = currentIndex;
                 currentIndex = index;
 
                 if (wasPlaying) {
@@ -797,7 +894,7 @@
                 switch (e.key) {
                     case ' ':
                     case 'Space':
-                        e.preventDefault(); // предотвращаем прокрутку страницы
+                        e.preventDefault();
                         togglePlay();
                         break;
                     case 'ArrowLeft':
@@ -807,6 +904,14 @@
                     case 'ArrowRight':
                         e.preventDefault();
                         switchStation(1);
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        changeVolume(0.05);
+                        break;
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        changeVolume(-0.05);
                         break;
                 }
             }
@@ -820,7 +925,10 @@
                 updatePlayButton(false);
                 startTrackUpdates(STATIONS[4].id);
 
-                audio.volume = parseFloat(volumeSlider.value);
+                // Устанавливаем начальную громкость
+                const initialVolume = parseFloat(volumeSlider.value);
+                audio.volume = initialVolume;
+                updateVolumeIndicator(initialVolume);
 
                 setTimeout(() => {
                     if (swiper) {
@@ -837,7 +945,16 @@
                 nextBtn.addEventListener('click', () => switchStation(1));
 
                 volumeSlider.addEventListener('input', (e) => {
-                    audio.volume = parseFloat(e.target.value);
+                    const val = parseFloat(e.target.value);
+                    audio.volume = val;
+                    updateVolumeIndicator(val);
+                    // Сбрасываем таймер скрытия индикатора, чтобы он не исчез сразу
+                    if (volumeIndicatorTimeout) {
+                        clearTimeout(volumeIndicatorTimeout);
+                    }
+                    volumeIndicatorTimeout = setTimeout(() => {
+                        volumeIndicator.classList.remove('visible');
+                    }, 1200);
                 });
 
                 audio.addEventListener('error', () => {
@@ -846,7 +963,6 @@
                     vinylDisc.style.animationPlayState = 'paused';
                 });
 
-                // Добавляем обработчик событий клавиатуры
                 document.addEventListener('keydown', handleKeydown);
             }
 
