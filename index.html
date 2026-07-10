@@ -485,8 +485,8 @@
             let switchTimeout = null;
             let trackUpdateInterval = null;
             let isSwiperProgrammatic = false;
+            let lastSlideChangeIndex = -1;
             let pendingIndex = -1;
-            let isAudioLoading = false;
 
             // ===== ПОЛУЧЕНИЕ ТРЕКА ИЗ channels.xml (с обновлением) =====
             async function fetchTrackFromXML(stationId) {
@@ -589,17 +589,20 @@
                     },
                     
                     on: {
+                        // Отслеживаем изменение слайда, но не переключаем сразу
                         slideChange: function() {
                             const realIndex = this.realIndex;
+                            // Сохраняем последний индекс, но не переключаем
                             if (!isSwiperProgrammatic) {
-                                // Сохраняем последний индекс
                                 lastSlideChangeIndex = realIndex;
                             }
                         },
                         
+                        // Когда свайп остановился и анимация завершена
                         slideChangeTransitionEnd: function() {
                             if (!isSwiperProgrammatic && !isSwitching) {
                                 const realIndex = this.realIndex;
+                                // Если индекс изменился, переключаем станцию
                                 if (realIndex !== currentIndex) {
                                     performSwitch(realIndex);
                                 }
@@ -607,16 +610,20 @@
                             isSwiperProgrammatic = false;
                         },
                         
+                        // Когда пользователь начинает касание - сбрасываем флаги
                         touchStart: function() {
                             if (!isSwiperProgrammatic) {
+                                // Отменяем pending переключения
                                 pendingIndex = -1;
                             }
                         },
                         
+                        // Когда пользователь отпускает - проверяем финальную позицию
                         touchEnd: function() {
                             if (!isSwiperProgrammatic && !isSwitching) {
                                 const realIndex = this.realIndex;
                                 if (realIndex !== currentIndex) {
+                                    // Небольшая задержка для завершения анимации
                                     setTimeout(() => {
                                         if (!isSwitching && swiper) {
                                             const finalIndex = swiper.realIndex;
@@ -642,6 +649,7 @@
                             if (index === currentIndex && isPlaying) {
                                 return;
                             }
+                            // При клике сразу переключаем
                             performSwitch(index);
                         }
                     });
@@ -650,6 +658,7 @@
 
             function performSwitch(index) {
                 if (isSwitching) {
+                    // Если уже переключаемся, сохраняем запрос
                     pendingIndex = index;
                     return;
                 }
@@ -664,102 +673,33 @@
                 // Блокируем переключения
                 isSwitching = true;
                 isSwiperProgrammatic = true;
-                isAudioLoading = true;
                 
                 // Обновляем UI
                 updateBackground(index);
                 updateDisplay(index);
                 startTrackUpdates(station.id);
 
-                // Сохраняем состояние воспроизведения ДО переключения
-                const wasPlaying = isPlaying;
-                
-                // Останавливаем текущее аудио
-                audio.pause();
-                
                 // Переключаем аудио
+                const wasPlaying = isPlaying;
                 audio.src = station.value;
                 audio.load();
 
                 // Обновляем индекс
+                const oldIndex = currentIndex;
                 currentIndex = index;
 
-                // Восстанавливаем воспроизведение, если оно было
+                // Если нужно продолжить воспроизведение
                 if (wasPlaying) {
-                    // Добавляем обработчик для воспроизведения после загрузки
-                    const playAfterLoad = () => {
-                        audio.removeEventListener('canplaythrough', playAfterLoad);
-                        audio.removeEventListener('loadedmetadata', playAfterLoad);
-                        
-                        if (isPlaying && !audio.paused) {
-                            // Уже играет
-                            isAudioLoading = false;
-                            return;
-                        }
-                        
-                        audio.play()
-                            .then(() => {
-                                isPlaying = true;
-                                isAudioLoading = false;
-                                updatePlayButton(true);
-                                vinylDisc.style.animationPlayState = 'running';
-                            })
-                            .catch((e) => {
-                                console.warn('Play error:', e.message);
-                                isPlaying = false;
-                                isAudioLoading = false;
-                                updatePlayButton(false);
-                                vinylDisc.style.animationPlayState = 'paused';
-                            });
-                    };
-                    
-                    // Пытаемся воспроизвести сразу
                     audio.play()
                         .then(() => {
-                            isPlaying = true;
-                            isAudioLoading = false;
-                            updatePlayButton(true);
                             vinylDisc.style.animationPlayState = 'running';
                         })
                         .catch((e) => {
-                            // Если не получилось, ждем загрузки
-                            if (e.name === 'NotSupportedError' || e.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
-                                console.warn('Source not ready, waiting for load');
-                                audio.addEventListener('canplaythrough', playAfterLoad);
-                                audio.addEventListener('loadedmetadata', playAfterLoad);
-                                
-                                // Таймаут на случай, если событие не сработает
-                                setTimeout(() => {
-                                    audio.removeEventListener('canplaythrough', playAfterLoad);
-                                    audio.removeEventListener('loadedmetadata', playAfterLoad);
-                                    if (!audio.paused) {
-                                        isAudioLoading = false;
-                                        return;
-                                    }
-                                    audio.play()
-                                        .then(() => {
-                                            isPlaying = true;
-                                            isAudioLoading = false;
-                                            updatePlayButton(true);
-                                            vinylDisc.style.animationPlayState = 'running';
-                                        })
-                                        .catch(() => {
-                                            isPlaying = false;
-                                            isAudioLoading = false;
-                                            updatePlayButton(false);
-                                            vinylDisc.style.animationPlayState = 'paused';
-                                        });
-                                }, 3000);
-                            } else {
-                                isPlaying = false;
-                                isAudioLoading = false;
-                                updatePlayButton(false);
-                                vinylDisc.style.animationPlayState = 'paused';
-                            }
+                            console.warn('Play error:', e.message);
+                            isPlaying = false;
+                            updatePlayButton(false);
+                            vinylDisc.style.animationPlayState = 'paused';
                         });
-                } else {
-                    // Если не играло, просто снимаем блокировку
-                    isAudioLoading = false;
                 }
 
                 // Переключаем свайпер к выбранной станции
@@ -767,17 +707,16 @@
                     swiper.slideToLoop(index, 400);
                 }
 
-                // Снимаем блокировку через время анимации + запас
+                // Снимаем блокировку через время анимации + небольшой запас
                 if (switchTimeout) {
                     clearTimeout(switchTimeout);
                 }
                 switchTimeout = setTimeout(() => {
                     isSwitching = false;
                     isSwiperProgrammatic = false;
-                    isAudioLoading = false;
                     switchTimeout = null;
                     
-                    // Проверяем, не было ли нового запроса
+                    // Проверяем, не было ли нового запроса во время переключения
                     if (pendingIndex !== -1 && pendingIndex !== currentIndex) {
                         const pending = pendingIndex;
                         pendingIndex = -1;
@@ -785,7 +724,7 @@
                     } else {
                         pendingIndex = -1;
                     }
-                }, 600);
+                }, 500);
             }
 
             function updateBackground(index) {
@@ -814,21 +753,30 @@
             }
 
             function togglePlay() {
-                if (isSwitching || isAudioLoading) return;
+                if (isSwitching) return;
 
                 if (isPlaying) {
-                    // Пауза
                     audio.pause();
                     isPlaying = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
                 } else {
-                    // Воспроизведение
                     const station = STATIONS[currentIndex];
                     if (!station) return;
 
-                    // Проверяем, правильный ли источник
                     if (audio.src && audio.src === station.value) {
+                        audio.play()
+                            .then(() => {
+                                isPlaying = true;
+                                updatePlayButton(true);
+                                vinylDisc.style.animationPlayState = 'running';
+                            })
+                            .catch((e) => {
+                                console.warn('Play error:', e.message);
+                            });
+                    } else {
+                        audio.src = station.value;
+                        audio.load();
                         audio.play()
                             .then(() => {
                                 isPlaying = true;
@@ -839,60 +787,7 @@
                                 console.warn('Play error:', e.message);
                                 isPlaying = false;
                                 updatePlayButton(false);
-                            });
-                    } else {
-                        // Если источник другой - переключаем
-                        audio.src = station.value;
-                        audio.load();
-                        
-                        const playAfterLoad = () => {
-                            audio.removeEventListener('canplaythrough', playAfterLoad);
-                            audio.removeEventListener('loadedmetadata', playAfterLoad);
-                            
-                            audio.play()
-                                .then(() => {
-                                    isPlaying = true;
-                                    updatePlayButton(true);
-                                    vinylDisc.style.animationPlayState = 'running';
-                                })
-                                .catch((e) => {
-                                    console.warn('Play error:', e.message);
-                                    isPlaying = false;
-                                    updatePlayButton(false);
-                                });
-                        };
-                        
-                        audio.play()
-                            .then(() => {
-                                isPlaying = true;
-                                updatePlayButton(true);
-                                vinylDisc.style.animationPlayState = 'running';
-                            })
-                            .catch((e) => {
-                                if (e.name === 'NotSupportedError') {
-                                    audio.addEventListener('canplaythrough', playAfterLoad);
-                                    audio.addEventListener('loadedmetadata', playAfterLoad);
-                                    
-                                    setTimeout(() => {
-                                        audio.removeEventListener('canplaythrough', playAfterLoad);
-                                        audio.removeEventListener('loadedmetadata', playAfterLoad);
-                                        if (!audio.paused) return;
-                                        
-                                        audio.play()
-                                            .then(() => {
-                                                isPlaying = true;
-                                                updatePlayButton(true);
-                                                vinylDisc.style.animationPlayState = 'running';
-                                            })
-                                            .catch(() => {
-                                                isPlaying = false;
-                                                updatePlayButton(false);
-                                            });
-                                    }, 3000);
-                                } else {
-                                    isPlaying = false;
-                                    updatePlayButton(false);
-                                }
+                                vinylDisc.style.animationPlayState = 'paused';
                             });
                     }
                 }
@@ -913,23 +808,6 @@
                 } else {
                     playIcon.className = 'fas fa-play';
                     playBtn.classList.remove('active');
-                }
-            }
-
-            // Синхронизация состояния кнопки с аудио
-            function syncPlayState() {
-                if (audio.paused) {
-                    if (isPlaying) {
-                        isPlaying = false;
-                        updatePlayButton(false);
-                        vinylDisc.style.animationPlayState = 'paused';
-                    }
-                } else {
-                    if (!isPlaying) {
-                        isPlaying = true;
-                        updatePlayButton(true);
-                        vinylDisc.style.animationPlayState = 'running';
-                    }
                 }
             }
 
@@ -962,28 +840,11 @@
                     audio.volume = parseFloat(e.target.value);
                 });
 
-                // Синхронизация состояния при ошибках или внешних изменениях
-                audio.addEventListener('play', () => {
-                    isPlaying = true;
-                    updatePlayButton(true);
-                    vinylDisc.style.animationPlayState = 'running';
-                });
-                
-                audio.addEventListener('pause', () => {
-                    isPlaying = false;
-                    updatePlayButton(false);
-                    vinylDisc.style.animationPlayState = 'paused';
-                });
-                
                 audio.addEventListener('error', () => {
                     isPlaying = false;
-                    isAudioLoading = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
                 });
-
-                // Синхронизация каждые 500мс для надежности
-                setInterval(syncPlayState, 500);
             }
 
             if (document.readyState === 'loading') {
