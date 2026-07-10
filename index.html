@@ -371,6 +371,11 @@
             .vinyl-container { display: none; }
         }
 
+        @media (orientation: landscape) and (max-width: 932px) {
+            .now-playing { margin-bottom: 10px; font-size: 0.7rem; }
+            .controls { transform: scale(0.8); }
+        }
+
         @supports (padding: max(0px)) {
             #app {
                 padding-left: max(20px, env(safe-area-inset-left));
