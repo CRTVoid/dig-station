@@ -206,10 +206,10 @@
         .tonearm-wrapper {
             position: absolute;
             bottom: 35%;
-            right: -170px;
-            width: 168px;
-            height: 168px;
-            transform-origin: 50% 0%;
+            right: -120px;
+            width: 176px;
+            height: 176px;
+            transform-origin: 50% 15px;
             transition: transform 0.9s cubic-bezier(0.34, 1.2, 0.64, 1);
             pointer-events: none;
             z-index: 10;
@@ -239,10 +239,11 @@
         /* Адаптив для тонарма */
         @media (max-width: 420px) {
             .tonearm-wrapper {
-                width: 120px;
-                height: 120px;
+                width: 126px;
+                height: 126px;
                 bottom: 30%;
-                right: -120px;
+                right: -80px;
+                transform-origin: 50% 12px;
             }
             .tonearm-wrapper.active {
                 transform: rotate(22deg) scale(1.1);
@@ -251,10 +252,11 @@
 
         @media (max-width: 360px) {
             .tonearm-wrapper {
-                width: 96px;
-                height: 96px;
+                width: 100px;
+                height: 100px;
                 bottom: 25%;
-                right: -80px;
+                right: -50px;
+                transform-origin: 50% 10px;
             }
             .tonearm-wrapper.active {
                 transform: rotate(20deg) scale(1.1);
