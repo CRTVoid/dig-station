@@ -394,7 +394,7 @@
         }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
     <div id="app">
         <section class="slider-container">
@@ -445,24 +445,17 @@
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-    <script>document.addEventListener('DOMContentLoaded', function() {
-    // Блокируем ПКМ
-    document.addEventListener('contextmenu', event => event.preventDefault());
-    
-    // Блокируем перетаскивание
-    document.addEventListener('dragstart', event => event.preventDefault());
-    
-    // Блокируем выделение
-    document.addEventListener('selectstart', event => event.preventDefault());
-    
-    // Блокируем перетаскивание мышкой с зажатой ЛКМ (например, перемещение iframe или картинок)
-    document.addEventListener('mousemove', function(e) {
-        if (e.buttons === 1) { // 1 = зажата левая кнопка
-            // Можно ничего не делать, либо отменить стандартное поведение
-            e.preventDefault();
-        }
-    }, { passive: false });
-});
+    <script>
+
+    // Простой вариант
+    document.addEventListener('contextmenu', function(e) {
+    e.preventDefault(); // Запрещаем показ меню
+    // e.stopPropagation(); // Раскомментируйте, если нужно остановить всплытие
+    });
+
+    // Или однострочник для всего сайта:
+    document.oncontextmenu = () => false;
+        
     </script>
 
     <script>
