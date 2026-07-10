@@ -205,10 +205,10 @@
         /* ===== ТОНАРМ ===== */
         .tonearm-wrapper {
             position: absolute;
-            bottom: 50%;
-            right: -20px;
-            width: 280px;
-            height: 280px;
+            bottom: 35%;
+            right: -170px;
+            width: 168px;
+            height: 168px;
             transform-origin: 50% 0%;
             transition: transform 0.9s cubic-bezier(0.34, 1.2, 0.64, 1);
             pointer-events: none;
@@ -233,31 +233,31 @@
         }
 
         .tonearm-wrapper.active {
-            transform: rotate(-25deg) scale(1.1);
+            transform: rotate(25deg) scale(1.1);
         }
 
         /* Адаптив для тонарма */
         @media (max-width: 420px) {
             .tonearm-wrapper {
-                width: 200px;
-                height: 200px;
-                bottom: 45%;
-                right: -30px;
+                width: 120px;
+                height: 120px;
+                bottom: 30%;
+                right: -120px;
             }
             .tonearm-wrapper.active {
-                transform: rotate(-22deg) scale(1.1);
+                transform: rotate(22deg) scale(1.1);
             }
         }
 
         @media (max-width: 360px) {
             .tonearm-wrapper {
-                width: 160px;
-                height: 160px;
-                bottom: 40%;
-                right: -40px;
+                width: 96px;
+                height: 96px;
+                bottom: 25%;
+                right: -80px;
             }
             .tonearm-wrapper.active {
-                transform: rotate(-20deg) scale(1.1);
+                transform: rotate(20deg) scale(1.1);
             }
         }
 
