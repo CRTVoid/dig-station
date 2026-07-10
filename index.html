@@ -479,13 +479,14 @@
             const nowTrackArtist = $('#nowTrackArtist');
 
             let currentIndex = 0;
-            let targetIndex = 0;
             let isPlaying = false;
             let swiper = null;
             let isSwitching = false;
-            let pendingSwitch = null;
+            let switchTimeout = null;
             let trackUpdateInterval = null;
             let isSwiperProgrammatic = false;
+            let lastSlideChangeIndex = -1;
+            let pendingIndex = -1;
 
             // ===== ПОЛУЧЕНИЕ ТРЕКА ИЗ channels.xml (с обновлением) =====
             async function fetchTrackFromXML(stationId) {
@@ -570,7 +571,7 @@
                     speed: 400,
                     allowTouchMove: true,
                     watchSlidesProgress: true,
-                    threshold: 10,
+                    threshold: 5,
                     
                     breakpoints: {
                         1024: {
@@ -588,36 +589,50 @@
                     },
                     
                     on: {
+                        // Отслеживаем изменение слайда, но не переключаем сразу
                         slideChange: function() {
+                            const realIndex = this.realIndex;
+                            // Сохраняем последний индекс, но не переключаем
                             if (!isSwiperProgrammatic) {
-                                const realIndex = this.realIndex;
-                                if (realIndex !== currentIndex) {
-                                    requestSwitch(realIndex);
-                                }
+                                lastSlideChangeIndex = realIndex;
                             }
                         },
-                        slideChangeTransitionStart: function() {
-                            // Блокируем только если это не программное переключение
-                            if (!isSwiperProgrammatic) {
-                                isSwitching = true;
-                            }
-                        },
+                        
+                        // Когда свайп остановился и анимация завершена
                         slideChangeTransitionEnd: function() {
-                            if (!isSwiperProgrammatic) {
-                                isSwitching = false;
-                                // Проверяем, не накопился ли pending запрос
-                                if (pendingSwitch !== null && pendingSwitch !== currentIndex) {
-                                    const pending = pendingSwitch;
-                                    pendingSwitch = null;
-                                    requestSwitch(pending);
+                            if (!isSwiperProgrammatic && !isSwitching) {
+                                const realIndex = this.realIndex;
+                                // Если индекс изменился, переключаем станцию
+                                if (realIndex !== currentIndex) {
+                                    performSwitch(realIndex);
                                 }
                             }
                             isSwiperProgrammatic = false;
                         },
+                        
+                        // Когда пользователь начинает касание - сбрасываем флаги
                         touchStart: function() {
-                            // При касании отменяем все программные переключения
-                            if (pendingSwitch !== null) {
-                                pendingSwitch = null;
+                            if (!isSwiperProgrammatic) {
+                                // Отменяем pending переключения
+                                pendingIndex = -1;
+                            }
+                        },
+                        
+                        // Когда пользователь отпускает - проверяем финальную позицию
+                        touchEnd: function() {
+                            if (!isSwiperProgrammatic && !isSwitching) {
+                                const realIndex = this.realIndex;
+                                if (realIndex !== currentIndex) {
+                                    // Небольшая задержка для завершения анимации
+                                    setTimeout(() => {
+                                        if (!isSwitching && swiper) {
+                                            const finalIndex = swiper.realIndex;
+                                            if (finalIndex !== currentIndex) {
+                                                performSwitch(finalIndex);
+                                            }
+                                        }
+                                    }, 50);
+                                }
                             }
                         }
                     }
@@ -625,49 +640,40 @@
 
                 document.querySelectorAll('.swiper-slide').forEach((slide) => {
                     slide.addEventListener('click', function(e) {
+                        if (isSwitching) {
+                            e.preventDefault();
+                            return;
+                        }
                         const index = parseInt(this.dataset.index);
                         if (!isNaN(index) && swiper) {
-                            // Проверяем, не пытаемся ли переключиться на ту же станцию
                             if (index === currentIndex && isPlaying) {
                                 return;
                             }
-                            // Используем requestSwitch для плавного переключения
-                            requestSwitch(index);
+                            // При клике сразу переключаем
+                            performSwitch(index);
                         }
                     });
                 });
             }
 
-            // Очередь запросов на переключение
-            function requestSwitch(index) {
-                // Если уже переключаемся, сохраняем запрос в pending
+            function performSwitch(index) {
                 if (isSwitching) {
-                    pendingSwitch = index;
+                    // Если уже переключаемся, сохраняем запрос
+                    pendingIndex = index;
                     return;
                 }
 
-                // Если запрос на ту же станцию, игнорируем
                 if (index === currentIndex) {
                     return;
                 }
 
-                // Выполняем переключение
-                performSwitch(index);
-            }
-
-            function performSwitch(index) {
-                if (isSwitching) return;
-                
                 const station = STATIONS[index];
                 if (!station) return;
 
-                // Устанавливаем флаг блокировки
+                // Блокируем переключения
                 isSwitching = true;
                 isSwiperProgrammatic = true;
-
-                // Сохраняем целевой индекс
-                targetIndex = index;
-
+                
                 // Обновляем UI
                 updateBackground(index);
                 updateDisplay(index);
@@ -678,7 +684,8 @@
                 audio.src = station.value;
                 audio.load();
 
-                // Обновляем индекс после загрузки
+                // Обновляем индекс
+                const oldIndex = currentIndex;
                 currentIndex = index;
 
                 // Если нужно продолжить воспроизведение
@@ -695,21 +702,27 @@
                         });
                 }
 
-                // Плавно переключаем свайпер к выбранной станции
+                // Переключаем свайпер к выбранной станции
                 if (swiper) {
                     swiper.slideToLoop(index, 400);
                 }
 
-                // Снимаем блокировку через время анимации
-                setTimeout(() => {
+                // Снимаем блокировку через время анимации + небольшой запас
+                if (switchTimeout) {
+                    clearTimeout(switchTimeout);
+                }
+                switchTimeout = setTimeout(() => {
                     isSwitching = false;
-                    // Проверяем, не накопился ли новый запрос
-                    if (pendingSwitch !== null && pendingSwitch !== currentIndex) {
-                        const pending = pendingSwitch;
-                        pendingSwitch = null;
-                        requestSwitch(pending);
+                    isSwiperProgrammatic = false;
+                    switchTimeout = null;
+                    
+                    // Проверяем, не было ли нового запроса во время переключения
+                    if (pendingIndex !== -1 && pendingIndex !== currentIndex) {
+                        const pending = pendingIndex;
+                        pendingIndex = -1;
+                        performSwitch(pending);
                     } else {
-                        pendingSwitch = null;
+                        pendingIndex = -1;
                     }
                 }, 500);
             }
@@ -785,9 +798,7 @@
                 
                 const currentRealIndex = swiper.realIndex;
                 const newIndex = (currentRealIndex + direction + STATIONS.length) % STATIONS.length;
-                
-                // Используем requestSwitch для плавного переключения
-                requestSwitch(newIndex);
+                performSwitch(newIndex);
             }
 
             function updatePlayButton(playing) {
@@ -803,9 +814,7 @@
             function init() {
                 buildSlider();
                 
-                // Устанавливаем начальную станцию (индекс 4)
                 currentIndex = 4;
-                targetIndex = 4;
                 updateBackground(4);
                 updateDisplay(4);
                 updatePlayButton(false);
@@ -813,7 +822,6 @@
 
                 audio.volume = parseFloat(volumeSlider.value);
 
-                // Инициализируем свайпер на нужной позиции
                 setTimeout(() => {
                     if (swiper) {
                         isSwiperProgrammatic = true;
