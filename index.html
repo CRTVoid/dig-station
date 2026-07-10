@@ -482,6 +482,7 @@
             let isPlaying = false;
             let swiper = null;
             let isSwitching = false;
+            let switchTimeout = null;
             let trackUpdateInterval = null;
 
             // ===== ПОЛУЧЕНИЕ ТРЕКА ИЗ channels.xml (с обновлением) =====
@@ -586,15 +587,36 @@
                     on: {
                         slideChange: function() {
                             const realIndex = this.realIndex;
-                            if (realIndex !== currentIndex) {
+                            if (realIndex !== currentIndex && !isSwitching) {
                                 switchToStation(realIndex);
                             }
+                        },
+                        slideChangeTransitionStart: function() {
+                            // Блокируем клики во время анимации свайпера
+                            isSwitching = true;
+                            if (switchTimeout) {
+                                clearTimeout(switchTimeout);
+                            }
+                        },
+                        slideChangeTransitionEnd: function() {
+                            // Разблокируем после завершения анимации
+                            if (switchTimeout) {
+                                clearTimeout(switchTimeout);
+                            }
+                            switchTimeout = setTimeout(() => {
+                                isSwitching = false;
+                                switchTimeout = null;
+                            }, 100);
                         }
                     }
                 });
 
                 document.querySelectorAll('.swiper-slide').forEach((slide) => {
-                    slide.addEventListener('click', function() {
+                    slide.addEventListener('click', function(e) {
+                        if (isSwitching) {
+                            e.preventDefault();
+                            return;
+                        }
                         const index = parseInt(this.dataset.index);
                         if (!isNaN(index) && swiper) {
                             swiper.slideToLoop(index);
@@ -632,6 +654,11 @@
                 if (isSwitching) return;
                 isSwitching = true;
 
+                // Очищаем предыдущий таймаут
+                if (switchTimeout) {
+                    clearTimeout(switchTimeout);
+                }
+
                 const station = STATIONS[index];
                 if (!station) {
                     isSwitching = false;
@@ -651,21 +678,34 @@
                     audio.play()
                         .then(() => {
                             vinylDisc.style.animationPlayState = 'running';
-                            isSwitching = false;
+                            // Разблокируем после завершения
+                            switchTimeout = setTimeout(() => {
+                                isSwitching = false;
+                                switchTimeout = null;
+                            }, 300);
                         })
                         .catch((e) => {
                             console.warn('Play error:', e.message);
                             isPlaying = false;
                             updatePlayButton(false);
                             vinylDisc.style.animationPlayState = 'paused';
-                            isSwitching = false;
+                            switchTimeout = setTimeout(() => {
+                                isSwitching = false;
+                                switchTimeout = null;
+                            }, 300);
                         });
                 } else {
-                    isSwitching = false;
+                    // Если не играет, разблокируем через небольшую задержку
+                    switchTimeout = setTimeout(() => {
+                        isSwitching = false;
+                        switchTimeout = null;
+                    }, 300);
                 }
             }
 
             function togglePlay() {
+                if (isSwitching) return;
+
                 if (isPlaying) {
                     audio.pause();
                     isPlaying = false;
@@ -705,7 +745,7 @@
             }
 
             function switchStation(direction) {
-                if (!swiper) return;
+                if (isSwitching || !swiper) return;
                 direction === 1 ? swiper.slideNext() : swiper.slidePrev();
             }
 
