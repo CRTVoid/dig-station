@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="192x192.png">
-    <!-- <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> -->
     <meta name="apple-mobile-web-app-title" content="dig station">
     <meta name="theme-color" content="#0a0a0a">
     <link rel="icon" type="icon" href="favicon.ico">
@@ -15,9 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-    
     <style>
         * {
             margin: 0;
@@ -322,7 +318,7 @@
             border: none;
             cursor: pointer;
         }
-        
+
         @media (max-width: 420px) {
             #app { padding: 16px 16px 16px; }
             .slider-container { height: 72px; margin: 20px 0 2px 0; }
@@ -400,8 +396,6 @@
             <div class="artist" id="displayArtist">SomaFM · Chillout</div>
         </div>
 
-        
-
         <section class="vinyl-container">
             <div class="vinyl" id="vinyl">
                 <div class="vinyl-disc" id="vinylDisc">
@@ -409,7 +403,6 @@
                 </div>
             </div>
         </section>
-
 
         <div class="now-playing" id="nowPlaying">
             <div class="track-title" id="nowTrackTitle">--</div>
@@ -589,20 +582,16 @@
                     },
                     
                     on: {
-                        // Отслеживаем изменение слайда, но не переключаем сразу
                         slideChange: function() {
                             const realIndex = this.realIndex;
-                            // Сохраняем последний индекс, но не переключаем
                             if (!isSwiperProgrammatic) {
                                 lastSlideChangeIndex = realIndex;
                             }
                         },
                         
-                        // Когда свайп остановился и анимация завершена
                         slideChangeTransitionEnd: function() {
                             if (!isSwiperProgrammatic && !isSwitching) {
                                 const realIndex = this.realIndex;
-                                // Если индекс изменился, переключаем станцию
                                 if (realIndex !== currentIndex) {
                                     performSwitch(realIndex);
                                 }
@@ -610,20 +599,16 @@
                             isSwiperProgrammatic = false;
                         },
                         
-                        // Когда пользователь начинает касание - сбрасываем флаги
                         touchStart: function() {
                             if (!isSwiperProgrammatic) {
-                                // Отменяем pending переключения
                                 pendingIndex = -1;
                             }
                         },
                         
-                        // Когда пользователь отпускает - проверяем финальную позицию
                         touchEnd: function() {
                             if (!isSwiperProgrammatic && !isSwitching) {
                                 const realIndex = this.realIndex;
                                 if (realIndex !== currentIndex) {
-                                    // Небольшая задержка для завершения анимации
                                     setTimeout(() => {
                                         if (!isSwitching && swiper) {
                                             const finalIndex = swiper.realIndex;
@@ -649,7 +634,6 @@
                             if (index === currentIndex && isPlaying) {
                                 return;
                             }
-                            // При клике сразу переключаем
                             performSwitch(index);
                         }
                     });
@@ -658,7 +642,6 @@
 
             function performSwitch(index) {
                 if (isSwitching) {
-                    // Если уже переключаемся, сохраняем запрос
                     pendingIndex = index;
                     return;
                 }
@@ -670,25 +653,20 @@
                 const station = STATIONS[index];
                 if (!station) return;
 
-                // Блокируем переключения
                 isSwitching = true;
                 isSwiperProgrammatic = true;
                 
-                // Обновляем UI
                 updateBackground(index);
                 updateDisplay(index);
                 startTrackUpdates(station.id);
 
-                // Переключаем аудио
                 const wasPlaying = isPlaying;
                 audio.src = station.value;
                 audio.load();
 
-                // Обновляем индекс
                 const oldIndex = currentIndex;
                 currentIndex = index;
 
-                // Если нужно продолжить воспроизведение
                 if (wasPlaying) {
                     audio.play()
                         .then(() => {
@@ -702,12 +680,10 @@
                         });
                 }
 
-                // Переключаем свайпер к выбранной станции
                 if (swiper) {
                     swiper.slideToLoop(index, 400);
                 }
 
-                // Снимаем блокировку через время анимации + небольшой запас
                 if (switchTimeout) {
                     clearTimeout(switchTimeout);
                 }
@@ -716,7 +692,6 @@
                     isSwiperProgrammatic = false;
                     switchTimeout = null;
                     
-                    // Проверяем, не было ли нового запроса во время переключения
                     if (pendingIndex !== -1 && pendingIndex !== currentIndex) {
                         const pending = pendingIndex;
                         pendingIndex = -1;
@@ -811,6 +786,31 @@
                 }
             }
 
+            // ===== ОБРАБОТЧИК КЛАВИШ =====
+            function handleKeydown(e) {
+                // Игнорируем, если событие происходит в поле ввода или текстовой области
+                const target = e.target;
+                if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+                    return;
+                }
+
+                switch (e.key) {
+                    case ' ':
+                    case 'Space':
+                        e.preventDefault(); // предотвращаем прокрутку страницы
+                        togglePlay();
+                        break;
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        switchStation(-1);
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        switchStation(1);
+                        break;
+                }
+            }
+
             function init() {
                 buildSlider();
                 
@@ -845,6 +845,9 @@
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
                 });
+
+                // Добавляем обработчик событий клавиатуры
+                document.addEventListener('keydown', handleKeydown);
             }
 
             if (document.readyState === 'loading') {
