@@ -363,9 +363,10 @@
             .volume-track { height: 70px; }
             .volume-track input { width: 70px; }
         }
-        @media (max-width: 768px) {
-            .volume-wrapper { display: none; }
+       @media (hover: none) and (pointer: coarse) {
+            .volume-wrapper { display: none;
         }
+    }
 
         @supports (padding: max(0px)) {
             #app {
