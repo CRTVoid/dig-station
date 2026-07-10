@@ -14,6 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    
     <style>
         * {
             margin: 0;
@@ -30,19 +31,6 @@
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
-            user-select: none; /* Стандарт */
-            -webkit-user-select: none; /* Safari */
-            -moz-user-select: none; /* Firefox */
-            -ms-user-select: none; /* IE */
-            cursor: default;
-        }
-
-        img, a {
-            -webkit-user-drag: none;
-            -khtml-user-drag: none;
-            -moz-user-drag: none;
-            -o-user-drag: none;
-            user-drag: none;
         }
 
         #app {
@@ -175,6 +163,7 @@
             align-items: center;
             min-height: 0;
             padding: 0 0 4px 0;
+            position: relative;
         }
 
         .vinyl {
@@ -185,6 +174,7 @@
             position: relative;
             border-radius: 50%;
             background: transparent;
+            box-shadow: none;
         }
 
         .vinyl-disc {
@@ -205,12 +195,80 @@
             border-radius: 50%;
             object-fit: contain;
             opacity: 0.8;
-            transform: scale(0.8)
+            transform: scale(0.8);
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* ===== ТОНАРМ ===== */
+        .tonearm-wrapper {
+            position: absolute;
+            bottom: 42%;
+            left: 8%;
+            width: 160px;
+            height: 160px;
+            transform-origin: 8% 92%;
+            transition: transform 0.9s cubic-bezier(0.34, 1.2, 0.64, 1);
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .tonearm-wrapper .tonearm-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            filter: drop-shadow(0 0 30px rgba(0,0,0,0.7));
+        }
+
+        .tonearm-wrapper {
+            transform: rotate(0deg) scale(1);
+        }
+
+        .tonearm-wrapper.active {
+            transform: rotate(-20deg) scale(1.05);
+        }
+
+        /* Адаптив для тонарма */
+        @media (max-width: 420px) {
+            .tonearm-wrapper {
+                width: 110px;
+                height: 110px;
+                bottom: 36%;
+                left: 4%;
+                transform-origin: 6% 90%;
+            }
+            .tonearm-wrapper.active {
+                transform: rotate(-18deg) scale(1.05);
+            }
+        }
+
+        @media (max-width: 360px) {
+            .tonearm-wrapper {
+                width: 80px;
+                height: 80px;
+                bottom: 30%;
+                left: 2%;
+                transform-origin: 4% 88%;
+            }
+            .tonearm-wrapper.active {
+                transform: rotate(-15deg) scale(1.05);
+            }
+        }
+
+        @media (orientation: landscape) and (max-width: 932px) {
+            .tonearm-wrapper {
+                display: none;
+            }
+        }
+        /* ===== КОНЕЦ ТОНАРМ ===== */
 
         .controls {
             display: flex;
@@ -330,7 +388,7 @@
             border: none;
             cursor: pointer;
         }
-
+        
         @media (max-width: 420px) {
             #app { padding: 16px 16px 16px; }
             .slider-container { height: 72px; margin: 20px 0 2px 0; }
@@ -371,6 +429,7 @@
             .volume-track { height: 70px; }
             .volume-track input { width: 70px; }
         }
+
         @media (hover: none) and (pointer: coarse) {
             .volume-wrapper { display: none; }
         }
@@ -382,7 +441,6 @@
         @media (orientation: landscape) and (max-width: 932px) {
             .now-playing { margin-bottom: 10px; margin-top: 60px; font-size: 0.7rem; }
             .controls { transform: scale(0.8); }
-            .app { padding-bottom: none; }
         }
 
         @supports (padding: max(0px)) {
@@ -394,7 +452,7 @@
         }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
     <div id="app">
         <section class="slider-container">
@@ -413,6 +471,32 @@
                 <div class="vinyl-disc" id="vinylDisc">
                     <img src="vinyl.svg" alt="Vinyl Record">
                 </div>
+                
+                <!-- ТОНАРМ -->
+                <div class="tonearm-wrapper" id="tonearmWrapper">
+                    <svg class="tonearm-svg" viewBox="215.19995 1184.2 266.5321 1054.9575">
+                        <defs>
+                            <linearGradient id="linearGradient184" inkscape:collect="always">
+                                <stop style="stop-color:#ffffff;stop-opacity:1;" offset="0" id="stop184" />
+                                <stop style="stop-color:#454343;stop-opacity:0.48524591;" offset="1" id="stop185" />
+                            </linearGradient>
+                            <linearGradient id="linearGradient182" inkscape:collect="always">
+                                <stop style="stop-color:#484848;stop-opacity:1;" offset="0" id="stop182" />
+                                <stop style="stop-color:#ffffff;stop-opacity:0;" offset="1" id="stop183" />
+                            </linearGradient>
+                            <linearGradient id="linearGradient183" inkscape:collect="always" xlink:href="#linearGradient182" x1="1752.8972" y1="1639.1755" x2="1940.4033" y2="1654.6436" gradientUnits="userSpaceOnUse" gradientTransform="rotate(0.323038,1340.2861,-62127.304)" />
+                            <radialGradient id="radialGradient185" inkscape:collect="always" xlink:href="#linearGradient184" cx="1841.4827" cy="1473.6687" fx="1841.4827" fy="1473.6687" r="20.416811" gradientUnits="userSpaceOnUse" gradientTransform="translate(-350.29795,-6.5691499)" />
+                        </defs>
+                        <g id="g185" transform="translate(-1111.6198,-0.10440843)">
+                            <path id="rect178" style="fill:url(#linearGradient183);stroke-width:1.52024;stroke-linecap:round;stroke-linejoin:round;paint-order:fill markers stroke" d="m 1484.5317,1184.3046 a 14.915541,14.915541 0 0 0 -15,14.8317 l -3.4381,609.7931 c -0.035,6.2045 -1.336,10.7484 -1.336,10.7484 l -73.9167,269.7732 28.7705,7.883 75.2189,-274.5217 c 1.381,-5.0405 1.0929,-13.7147 1.0929,-13.7147 v 0 l 3.4381,-609.7931 a 14.915541,14.915541 0 0 0 -14.8316,-14.9999 z" />
+                            <rect style="fill:#333333;stroke-width:1.4345;stroke-linecap:round;stroke-linejoin:round;paint-order:fill markers stroke" id="rect179" width="111.12823" height="92.009758" x="1435.6206" y="1208.8625" transform="rotate(0.323038)" />
+                            <circle style="fill:#333333;stroke-width:1.6077;stroke-linecap:round;stroke-linejoin:round;paint-order:fill markers stroke" id="circle180" cx="1491.1847" cy="1467.0996" r="110.46244" transform="rotate(0.323038)" />
+                            <rect style="fill:#333333;stroke-width:1.801;stroke-linecap:round;stroke-linejoin:round;paint-order:fill markers stroke" id="rect181" width="86.178642" height="139.43997" x="1865.384" y="1647.6283" inkscape:transform-center-y="67.344495" inkscape:transform-center-x="18.044973" transform="rotate(15.323038)" />
+                            <circle style="opacity:1;fill:url(#radialGradient185);stroke-width:0.297152;stroke-linecap:round;stroke-linejoin:round;paint-order:fill markers stroke" id="circle183" cx="1491.1847" cy="1467.0996" r="20.416811" transform="rotate(0.323038)" />
+                        </g>
+                    </svg>
+                </div>
+                <!-- КОНЕЦ ТОНАРМ -->
             </div>
         </section>
 
@@ -444,19 +528,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-
-    <script>
-
-    // Простой вариант
-    document.addEventListener('contextmenu', function(e) {
-    e.preventDefault(); // Запрещаем показ меню
-    // e.stopPropagation(); // Раскомментируйте, если нужно остановить всплытие
-    });
-
-    // Или однострочник для всего сайта:
-    document.oncontextmenu = () => false;
-        
-    </script>
 
     <script>
         (function() {
@@ -495,6 +566,7 @@
             const displayArtist = $('#displayArtist');
             const nowTrackTitle = $('#nowTrackTitle');
             const nowTrackArtist = $('#nowTrackArtist');
+            const tonearm = $('#tonearmWrapper');
 
             let currentIndex = 0;
             let isPlaying = false;
@@ -506,7 +578,7 @@
             let lastSlideChangeIndex = -1;
             let pendingIndex = -1;
 
-            // ===== ПОЛУЧЕНИЕ ТРЕКА ИЗ channels.xml (с обновлением) =====
+            // ===== ПОЛУЧЕНИЕ ТРЕКА ИЗ channels.xml =====
             async function fetchTrackFromXML(stationId) {
                 if (!stationId) return;
                 try {
@@ -546,7 +618,6 @@
                 }
             }
 
-            // ===== ЗАПУСК ОБНОВЛЕНИЯ ДЛЯ ЛЮБОЙ СТАНЦИИ =====
             function startTrackUpdates(stationId) {
                 if (trackUpdateInterval) {
                     clearInterval(trackUpdateInterval);
@@ -689,7 +760,6 @@
                 audio.src = station.value;
                 audio.load();
 
-                const oldIndex = currentIndex;
                 currentIndex = index;
 
                 if (wasPlaying) {
@@ -702,6 +772,7 @@
                             isPlaying = false;
                             updatePlayButton(false);
                             vinylDisc.style.animationPlayState = 'paused';
+                            tonearm.classList.remove('active');
                         });
                 }
 
@@ -740,7 +811,7 @@
                 ];
                 const c = colors[index % colors.length];
                 if (c) {
-                    app.style.background = `radial-gradient(ellipse at 50% 50%, ${c[0]}, ${c[1]})`;
+                    app.style.background = `radial-gradient(ellipse at 50% 30%, ${c[0]}, ${c[1]})`;
                 }
             }
 
@@ -760,6 +831,7 @@
                     isPlaying = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
+                    tonearm.classList.remove('active');
                 } else {
                     const station = STATIONS[currentIndex];
                     if (!station) return;
@@ -770,6 +842,7 @@
                                 isPlaying = true;
                                 updatePlayButton(true);
                                 vinylDisc.style.animationPlayState = 'running';
+                                tonearm.classList.add('active');
                             })
                             .catch((e) => {
                                 console.warn('Play error:', e.message);
@@ -782,12 +855,14 @@
                                 isPlaying = true;
                                 updatePlayButton(true);
                                 vinylDisc.style.animationPlayState = 'running';
+                                tonearm.classList.add('active');
                             })
                             .catch((e) => {
                                 console.warn('Play error:', e.message);
                                 isPlaying = false;
                                 updatePlayButton(false);
                                 vinylDisc.style.animationPlayState = 'paused';
+                                tonearm.classList.remove('active');
                             });
                     }
                 }
@@ -811,31 +886,6 @@
                 }
             }
 
-            // ===== ОБРАБОТЧИК КЛАВИШ =====
-            function handleKeydown(e) {
-                // Игнорируем, если событие происходит в поле ввода или текстовой области
-                const target = e.target;
-                if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-                    return;
-                }
-
-                switch (e.key) {
-                    case ' ':
-                    case 'Space':
-                        e.preventDefault(); // предотвращаем прокрутку страницы
-                        togglePlay();
-                        break;
-                    case 'ArrowLeft':
-                        e.preventDefault();
-                        switchStation(-1);
-                        break;
-                    case 'ArrowRight':
-                        e.preventDefault();
-                        switchStation(1);
-                        break;
-                }
-            }
-
             function init() {
                 buildSlider();
                 
@@ -844,6 +894,8 @@
                 updateDisplay(4);
                 updatePlayButton(false);
                 startTrackUpdates(STATIONS[4].id);
+                
+                tonearm.classList.remove('active');
 
                 audio.volume = parseFloat(volumeSlider.value);
 
@@ -869,10 +921,8 @@
                     isPlaying = false;
                     updatePlayButton(false);
                     vinylDisc.style.animationPlayState = 'paused';
+                    tonearm.classList.remove('active');
                 });
-
-                // Добавляем обработчик событий клавиатуры
-                document.addEventListener('keydown', handleKeydown);
             }
 
             if (document.readyState === 'loading') {
