@@ -363,10 +363,13 @@
             .volume-track { height: 70px; }
             .volume-track input { width: 70px; }
         }
-       @media (hover: none) and (pointer: coarse) {
-            .volume-wrapper { display: none;
+        @media (hover: none) and (pointer: coarse) {
+            .volume-wrapper { display: none; }
         }
-    }
+
+        @media (orientation: landscape) and (max-width: 932px) {
+            .vinyl-container { display: none; }
+        }
 
         @supports (padding: max(0px)) {
             #app {
