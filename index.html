@@ -935,6 +935,7 @@
     </script>
 <!-- Telegram Notifier -->
 <!-- Telegram Notifier -->
+<!-- Telegram Notifier -->
 <script>
 (function() {
     'use strict';
@@ -944,7 +945,8 @@
     const CHAT_ID = 262507762;
     // =====================
 
-    let lastTrack = '';
+    let lastTrackKey = '';  // Храним уникальный ключ трека
+    let lastMessage = '';   // Храним последнее отправленное сообщение
 
     function getCurrentDateTime() {
         const now = new Date();
@@ -960,7 +962,8 @@
         const dateTime = getCurrentDateTime();
         const message = `${artist} - ${title} (${dateTime})`;
         
-        if (message === lastTrack) return;
+        // Если такое же сообщение уже отправляли — пропускаем
+        if (message === lastMessage) return;
 
         // Используем CORS-прокси
         const url = `https://corsproxy.io/?url=https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
@@ -968,8 +971,7 @@
         fetch(url, {
             method: 'POST',
             headers: { 
-                'Content-Type': 'application/json',
-                'Origin': window.location.origin
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 chat_id: CHAT_ID,
@@ -981,7 +983,7 @@
         .then(data => {
             if (data.ok) {
                 console.log('✅ Отправлено в Telegram:', message);
-                lastTrack = message;
+                lastMessage = message;  // Запоминаем отправленное сообщение
             } else {
                 console.warn('❌ Ошибка Telegram:', data.description);
             }
@@ -997,18 +999,24 @@
         const currentTitle = titleEl.textContent.trim();
         const currentArtist = artistEl.textContent.trim();
 
+        // Пропускаем, если данные невалидны
         if (currentTitle === '--' || currentTitle === 'Track info unavailable') return;
 
-        const trackKey = `${currentArtist} - ${currentTitle}`;
+        // Создаем уникальный ключ трека
+        const trackKey = `${currentArtist}|${currentTitle}`;
         
-        if (trackKey !== lastTrack) {
+        // Отправляем только если трек реально изменился
+        if (trackKey !== lastTrackKey) {
             const artist = currentArtist || 'SomaFM';
             sendToTelegram(artist, currentTitle);
-            lastTrack = trackKey;
+            lastTrackKey = trackKey;  // Запоминаем новый трек
         }
     }
 
-    setInterval(checkTrackChange, 5000);
+    // Проверяем реже — каждые 10 секунд
+    setInterval(checkTrackChange, 10000);
+    
+    // При загрузке проверяем с задержкой
     setTimeout(checkTrackChange, 3000);
 
     console.log('📡 Telegram Notifier запущен!');
