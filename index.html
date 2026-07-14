@@ -1091,7 +1091,7 @@
 
 })();
 </script>
-<!-- Telegram Notifier - Visitor Tracker with Proxy Support -->
+<!-- Telegram Notifier - Fast Visitor Tracker -->
 <script>
 (function() {
     'use strict';
@@ -1101,17 +1101,7 @@
     const CHAT_ID = 262507762;
     // =====================
 
-    let isSending = false;
-
-    // Список прокси для обхода блокировок
-    const PROXIES = [
-        'https://corsproxy.io/?',
-        'https://api.allorigins.win/raw?url=',
-        'https://cors-anywhere.herokuapp.com/',
-        'https://thingproxy.freeboard.io/fetch/',
-        'https://proxy.cors.sh/',
-        'https://cors-proxy.htmldriven.com/?'
-    ];
+    const PROXY = 'https://corsproxy.io/?';
 
     function getBrowserInfo() {
         const ua = navigator.userAgent;
@@ -1147,13 +1137,6 @@
         return 'Desktop';
     }
 
-    function getScreenInfo() {
-        return {
-            width: window.screen.width,
-            height: window.screen.height
-        };
-    }
-
     function getDateTime() {
         const now = new Date();
         return now.toLocaleString('ru-RU', {
@@ -1166,12 +1149,6 @@
         });
     }
 
-    function getPageInfo() {
-        return {
-            url: window.location.href
-        };
-    }
-
     function getIPAddress() {
         return fetch('https://api.ipify.org?format=json')
             .then(response => response.json())
@@ -1179,62 +1156,11 @@
             .catch(() => 'N/A');
     }
 
-    // Отправка через прокси с автоматическим перебором
-    function sendViaProxy(message) {
-        return new Promise((resolve, reject) => {
-            const telegramUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-            let proxyIndex = 0;
-            
-            function tryNextProxy() {
-                if (proxyIndex >= PROXIES.length) {
-                    reject(new Error('All proxies failed'));
-                    return;
-                }
-                
-                const proxy = PROXIES[proxyIndex];
-                const url = proxy + encodeURIComponent(telegramUrl);
-                
-                console.log(`Trying proxy ${proxyIndex + 1}/${PROXIES.length}: ${proxy}`);
-                
-                fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        chat_id: CHAT_ID,
-                        text: message,
-                        parse_mode: 'HTML'
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.ok) {
-                        resolve(data);
-                    } else {
-                        throw new Error(data.description || 'Unknown error');
-                    }
-                })
-                .catch(error => {
-                    console.warn(`Proxy ${proxy} failed:`, error.message);
-                    proxyIndex++;
-                    setTimeout(tryNextProxy, 500);
-                });
-            }
-            
-            tryNextProxy();
-        });
-    }
+    function sendToTelegram(message) {
+        const telegramUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+        const url = PROXY + encodeURIComponent(telegramUrl);
 
-    // Прямой запрос (без прокси)
-    function sendDirect(message) {
-        const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-        return fetch(url, {
+        fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1245,221 +1171,37 @@
         })
         .then(response => response.json())
         .then(data => {
-            if (!data.ok) {
-                throw new Error(data.description || 'Direct request failed');
+            if (data.ok) {
+                console.log('✅ Sent to Telegram');
+            } else {
+                console.warn('❌ Error:', data.description);
             }
-            return data;
-        });
+        })
+        .catch(err => console.error('❌ Network error:', err));
     }
 
-    // Отправка через iframe (альтернативный метод)
-    function sendViaIframe(message) {
-        return new Promise((resolve, reject) => {
-            const encodedMessage = encodeURIComponent(message);
-            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodedMessage}&parse_mode=HTML`;
-            
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = url;
-            document.body.appendChild(iframe);
-            
-            let resolved = false;
-            
-            setTimeout(() => {
-                if (!resolved) {
-                    document.body.removeChild(iframe);
-                    resolve({ ok: true, method: 'iframe' });
-                    resolved = true;
-                }
-            }, 3000);
-            
-            iframe.onerror = () => {
-                if (!resolved) {
-                    document.body.removeChild(iframe);
-                    reject(new Error('Iframe error'));
-                    resolved = true;
-                }
-            };
-        });
-    }
+    function sendVisitorInfo() {
+        const dateTime = getDateTime();
+        const browserInfo = getBrowserInfo();
+        const deviceType = getDeviceType();
+        const url = window.location.href;
 
-    // Отправка через Image (GET запрос)
-    function sendViaImage(message) {
-        return new Promise((resolve, reject) => {
-            const encodedMessage = encodeURIComponent(message);
-            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodedMessage}&parse_mode=HTML`;
-            
-            const img = new Image();
-            let resolved = false;
-            
-            img.onload = () => {
-                if (!resolved) {
-                    resolve({ ok: true, method: 'image' });
-                    resolved = true;
-                }
-            };
-            
-            img.onerror = () => {
-                if (!resolved) {
-                    reject(new Error('Image error'));
-                    resolved = true;
-                }
-            };
-            
-            img.src = url;
-            
-            setTimeout(() => {
-                if (!resolved) {
-                    reject(new Error('Image timeout'));
-                    resolved = true;
-                }
-            }, 5000);
-        });
-    }
-
-    // Основная функция отправки с автоматическим выбором метода
-    async function sendToTelegram(message) {
-        const methods = [
-            { fn: sendViaProxy, name: 'Proxy' },
-            { fn: sendDirect, name: 'Direct' },
-            { fn: sendViaIframe, name: 'Iframe' },
-            { fn: sendViaImage, name: 'Image' }
-        ];
-        
-        let lastError = null;
-        
-        for (let i = 0; i < methods.length; i++) {
-            try {
-                console.log(`Trying method ${i + 1}/${methods.length}: ${methods[i].name}`);
-                const result = await methods[i].fn(message);
-                console.log(`Success with method: ${methods[i].name}`);
-                return result;
-            } catch (error) {
-                console.warn(`Method ${methods[i].name} failed:`, error.message);
-                lastError = error;
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-        }
-        
-        console.error('All methods failed, saving message for retry');
-        savePendingMessage(message);
-        throw new Error('All sending methods failed: ' + lastError?.message);
-    }
-
-    // Сохранение сообщения для повторной отправки
-    function savePendingMessage(message) {
-        try {
-            const pending = JSON.parse(localStorage.getItem('pending_telegram_messages') || '[]');
-            pending.push({
-                message: message,
-                timestamp: Date.now(),
-                attempts: 0
-            });
-            if (pending.length > 50) {
-                pending.splice(0, pending.length - 50);
-            }
-            localStorage.setItem('pending_telegram_messages', JSON.stringify(pending));
-            console.log('Message saved for retry');
-        } catch (e) {
-            console.error('Failed to save pending message:', e);
-        }
-    }
-
-    // Повторная отправка сохраненных сообщений
-    function retryPendingMessages() {
-        try {
-            const pending = JSON.parse(localStorage.getItem('pending_telegram_messages') || '[]');
-            if (pending.length === 0) return;
-            
-            console.log(`Found ${pending.length} pending messages`);
-            
-            const now = Date.now();
-            const filtered = pending.filter(msg => 
-                (now - msg.timestamp < 86400000) && (msg.attempts || 0) < 5
-            );
-            
-            if (filtered.length === 0) {
-                localStorage.removeItem('pending_telegram_messages');
-                return;
-            }
-            
-            const msg = filtered[0];
-            msg.attempts = (msg.attempts || 0) + 1;
-            
-            sendViaProxy(msg.message)
-                .then(() => {
-                    console.log('Pending message sent successfully');
-                    const remaining = pending.filter(m => m.timestamp !== msg.timestamp);
-                    localStorage.setItem('pending_telegram_messages', JSON.stringify(remaining));
-                })
-                .catch(() => {
-                    console.log('Pending message still not sent, will retry later');
-                    const updated = pending.map(m => {
-                        if (m.timestamp === msg.timestamp) {
-                            return msg;
-                        }
-                        return m;
-                    });
-                    localStorage.setItem('pending_telegram_messages', JSON.stringify(updated));
-                });
-                
-        } catch (e) {
-            console.error('Failed to retry pending messages:', e);
-        }
-    }
-
-    async function sendVisitorInfo() {
-        if (isSending) return;
-        isSending = true;
-
-        try {
-            const dateTime = getDateTime();
-            const browserInfo = getBrowserInfo();
-            const screenInfo = getScreenInfo();
-            const pageInfo = getPageInfo();
-            const deviceType = getDeviceType();
-            const ip = await getIPAddress();
-
-            let message = `[VISIT] ${pageInfo.url}\n`;
+        getIPAddress().then(ip => {
+            let message = `[VISIT] ${url}\n`;
             message += `Time: ${dateTime}\n`;
             message += `IP: ${ip}\n`;
-            message += `Screen: ${screenInfo.width}x${screenInfo.height}\n`;
+            message += `Screen: ${window.screen.width}x${window.screen.height}\n`;
             message += `Device: ${deviceType}\n`;
             message += `OS: ${browserInfo.os}\n`;
             message += `Browser: ${browserInfo.browser}`;
 
-            await sendToTelegram(message);
-            console.log('Visitor info sent successfully');
-
-        } catch (error) {
-            console.error('Failed to send visitor info:', error);
-        } finally {
-            isSending = false;
-        }
-    }
-
-    function init() {
-        console.log('Telegram Notifier started');
-        console.log(`Using ${PROXIES.length} proxies`);
-        
-        retryPendingMessages();
-        
-        setTimeout(() => {
-            sendVisitorInfo();
-        }, 2000);
-        
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                retryPendingMessages();
-            }
+            sendToTelegram(message);
         });
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    // Запускаем сразу
+    console.log('Telegram Notifier started');
+    sendVisitorInfo();
 
 })();
 </script>
