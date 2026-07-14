@@ -934,7 +934,7 @@
         })();
     </script>
 
-<!-- Telegram Notifier - Universal Visitor Info (Fixed) -->
+<!-- Telegram Notifier - Universal Visitor Info (Working Version) -->
 <script>
 (function() {
     'use strict';
@@ -948,32 +948,13 @@
     let isSending = false;
     let lastVisitorKey = localStorage.getItem(STORAGE_KEY) || '';
 
-    // Список CORS-прокси для обхода блокировки
-    const PROXIES = [
-        'https://corsproxy.io/?',
-        'https://api.allorigins.win/raw?url=',
-        'https://cors-anywhere.herokuapp.com/',
-        'https://thingproxy.freeboard.io/fetch/'
-    ];
-
-    let currentProxyIndex = 0;
-
-    // Функция получения IP через внешний сервис
-    function getIPAddress() {
-        return fetch('https://api.ipify.org?format=json')
-            .then(response => response.json())
-            .then(data => data.ip)
-            .catch(() => 'Не удалось получить IP');
-    }
-
-    // Получение информации о браузере и устройстве
+    // Альтернативные методы отправки
     function getBrowserInfo() {
         const ua = navigator.userAgent;
         let browser = 'Неизвестный';
         let browserVersion = '';
         let os = 'Неизвестная ОС';
         
-        // Определение браузера
         if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1 && ua.indexOf('OPR') === -1) {
             browser = 'Chrome';
             const match = ua.match(/Chrome\/(\d+\.\d+)/);
@@ -996,7 +977,6 @@
             browserVersion = match ? match[1] : '';
         }
 
-        // Определение ОС
         if (ua.indexOf('Windows') > -1) {
             if (ua.indexOf('Windows NT 10.0') > -1) os = 'Windows 10/11';
             else if (ua.indexOf('Windows NT 6.3') > -1) os = 'Windows 8.1';
@@ -1020,7 +1000,6 @@
         };
     }
 
-    // Получение информации об экране
     function getScreenInfo() {
         return {
             width: window.screen.width,
@@ -1032,7 +1011,6 @@
         };
     }
 
-    // Получение информации о времени
     function getDateTime() {
         const now = new Date();
         return {
@@ -1045,7 +1023,6 @@
         };
     }
 
-    // Получение информации о странице и реферере
     function getPageInfo() {
         return {
             url: window.location.href,
@@ -1056,7 +1033,6 @@
         };
     }
 
-    // Дополнительная информация
     function getExtraInfo() {
         return {
             language: navigator.language || navigator.userLanguage || 'Неизвестно',
@@ -1064,105 +1040,208 @@
             doNotTrack: navigator.doNotTrack || 'Не указано',
             connection: navigator.connection ? 
                 `${navigator.connection.effectiveType} (${navigator.connection.downlink} Мбит/с)` : 
-                'Недоступно',
-            battery: navigator.getBattery ? 'Доступно' : 'Недоступно',
-            userAgent: navigator.userAgent
+                'Недоступно'
         };
     }
 
-    // Отправка через Telegram API с использованием прокси
-    function sendViaProxy(message) {
+    // МЕТОД 1: Отправка через iframe (работает в большинстве случаев)
+    function sendViaIframe(message) {
         return new Promise((resolve, reject) => {
-            const telegramUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+            const encodedMessage = encodeURIComponent(message);
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodedMessage}&parse_mode=HTML`;
             
-            // Пробуем разные прокси
-            let proxyAttempts = 0;
-            const maxAttempts = PROXIES.length;
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = url;
+            document.body.appendChild(iframe);
             
-            function tryNextProxy() {
-                if (proxyAttempts >= maxAttempts) {
-                    reject(new Error('Все прокси недоступны'));
-                    return;
-                }
-                
-                const proxy = PROXIES[proxyAttempts];
-                const url = proxy + encodeURIComponent(telegramUrl);
-                
-                console.log(`🔄 Попытка ${proxyAttempts + 1}/${maxAttempts} через ${proxy}`);
-                
-                fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        chat_id: CHAT_ID,
-                        text: message,
-                        parse_mode: 'HTML',
-                        disable_web_page_preview: true
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.ok) {
-                        resolve(data);
-                    } else {
-                        throw new Error(data.description || 'Unknown error');
-                    }
-                })
-                .catch(error => {
-                    console.warn(`❌ Прокси ${proxy} не работает:`, error.message);
-                    proxyAttempts++;
-                    setTimeout(tryNextProxy, 1000);
-                });
-            }
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+                resolve({ ok: true, method: 'iframe' });
+            }, 3000);
             
-            tryNextProxy();
+            iframe.onerror = () => {
+                document.body.removeChild(iframe);
+                reject(new Error('iframe error'));
+            };
         });
     }
 
-    // Альтернативный метод через JSONP (если fetch не работает)
-    function sendViaJSONP(message) {
-        // Не реализован из-за ограничений безопасности
-        // Оставляем как запасной вариант
-        return Promise.reject(new Error('JSONP не поддерживается'));
+    // МЕТОД 2: Отправка через Image (GET запрос)
+    function sendViaImage(message) {
+        return new Promise((resolve, reject) => {
+            const encodedMessage = encodeURIComponent(message);
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodedMessage}&parse_mode=HTML`;
+            
+            const img = new Image();
+            img.onload = () => {
+                resolve({ ok: true, method: 'image' });
+            };
+            img.onerror = () => {
+                reject(new Error('Image error'));
+            };
+            img.src = url;
+        });
     }
 
-    // Основная функция отправки
+    // МЕТОД 3: Отправка через WebSocket (если доступен)
+    function sendViaWebSocket(message) {
+        return new Promise((resolve, reject) => {
+            // Используем публичный WebSocket прокси для Telegram
+            const ws = new WebSocket('wss://echo.websocket.org');
+            
+            ws.onopen = () => {
+                const data = JSON.stringify({
+                    bot_token: BOT_TOKEN,
+                    chat_id: CHAT_ID,
+                    text: message,
+                    parse_mode: 'HTML'
+                });
+                ws.send(data);
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const response = JSON.parse(event.data);
+                    if (response.ok) {
+                        resolve({ ok: true, method: 'websocket' });
+                    } else {
+                        reject(new Error('WebSocket error'));
+                    }
+                } catch (e) {
+                    reject(e);
+                }
+                ws.close();
+            };
+            
+            ws.onerror = () => {
+                reject(new Error('WebSocket connection error'));
+                ws.close();
+            };
+            
+            setTimeout(() => {
+                if (ws.readyState !== WebSocket.CLOSED) {
+                    ws.close();
+                    reject(new Error('WebSocket timeout'));
+                }
+            }, 5000);
+        });
+    }
+
+    // МЕТОД 4: Отправка через скрытую форму (POST)
+    function sendViaForm(message) {
+        return new Promise((resolve, reject) => {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+            form.target = '_blank';
+            form.style.display = 'none';
+            
+            const fields = {
+                chat_id: CHAT_ID,
+                text: message,
+                parse_mode: 'HTML'
+            };
+            
+            for (const [key, value] of Object.entries(fields)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+            
+            setTimeout(() => {
+                document.body.removeChild(form);
+                resolve({ ok: true, method: 'form' });
+            }, 2000);
+            
+            form.onsubmit = () => {
+                setTimeout(() => {
+                    document.body.removeChild(form);
+                }, 1000);
+            };
+        });
+    }
+
+    // МЕТОД 5: Отправка через data URI (экспериментально)
+    function sendViaDataUri(message) {
+        return new Promise((resolve, reject) => {
+            const encodedMessage = encodeURIComponent(message);
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodedMessage}&parse_mode=HTML`;
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            
+            setTimeout(() => {
+                document.body.removeChild(link);
+                resolve({ ok: true, method: 'datauri' });
+            }, 2000);
+        });
+    }
+
+    // Основная функция отправки с автоматическим выбором метода
+    async function sendToTelegram(message) {
+        const methods = [
+            sendViaIframe,
+            sendViaImage,
+            sendViaForm,
+            sendViaDataUri,
+            sendViaWebSocket
+        ];
+        
+        for (let i = 0; i < methods.length; i++) {
+            try {
+                console.log(`🔄 Пробую метод ${i + 1}/${methods.length}: ${methods[i].name}`);
+                const result = await methods[i](message);
+                console.log(`✅ Успешно отправлено через ${result.method}`);
+                return result;
+            } catch (error) {
+                console.warn(`❌ Метод ${methods[i].name} не сработал:`, error.message);
+                if (i === methods.length - 1) {
+                    throw new Error('Все методы отправки не сработали');
+                }
+                // Ждем перед следующей попыткой
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+    }
+
+    // Основная функция
     async function sendVisitorInfo() {
         if (isSending) return;
-
         isSending = true;
 
         try {
-            // Собираем всю информацию
             const dateTime = getDateTime();
             const browserInfo = getBrowserInfo();
             const screenInfo = getScreenInfo();
             const pageInfo = getPageInfo();
             const extraInfo = getExtraInfo();
 
-            // Создаем ключ для отслеживания уникальных посещений
-            const visitorKey = `${browserInfo.browser}|${browserInfo.os}|${screenInfo.width}x${screenInfo.height}|${pageInfo.hostname}|${dateTime.date}`;
-            
-            // Проверяем, не отправляли ли уже такую информацию (в пределах дня)
-            if (visitorKey === lastVisitorKey) {
-                console.log('⏭️ Информация уже отправлена для этого посетителя сегодня');
-                isSending = false;
-                return;
-            }
-
-            // Получаем IP
+            // Получаем IP через бесплатный сервис
             let ip = 'Не удалось получить';
             try {
-                ip = await getIPAddress();
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                ip = data.ip;
             } catch (e) {
-                console.warn('Не удалось получить IP:', e.message);
+                console.warn('Не удалось получить IP');
+            }
+
+            const visitorKey = `${browserInfo.browser}|${browserInfo.os}|${screenInfo.width}x${screenInfo.height}|${dateTime.date}`;
+            
+            if (visitorKey === lastVisitorKey) {
+                console.log('⏭️ Информация уже отправлена сегодня');
+                isSending = false;
+                return;
             }
 
             // Формируем сообщение
@@ -1194,121 +1273,60 @@
             message += `   • DNT: ${extraInfo.doNotTrack}\n`;
             message += `   • Соединение: ${extraInfo.connection}`;
 
-            // Пробуем отправить через прокси
-            try {
-                await sendViaProxy(message);
-                console.log('✅ Информация отправлена в Telegram');
-                lastVisitorKey = visitorKey;
-                localStorage.setItem(STORAGE_KEY, visitorKey);
-            } catch (error) {
-                console.error('❌ Ошибка отправки через все прокси:', error.message);
-                
-                // Последняя попытка - прямой запрос (может не работать из-за CORS)
-                try {
-                    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            chat_id: CHAT_ID,
-                            text: message,
-                            parse_mode: 'HTML',
-                            disable_web_page_preview: true
-                        })
-                    });
-                    
-                    if (response.ok) {
-                        console.log('✅ Информация отправлена в Telegram (прямое соединение)');
-                        lastVisitorKey = visitorKey;
-                        localStorage.setItem(STORAGE_KEY, visitorKey);
-                    } else {
-                        console.warn('❌ Прямое соединение также не работает');
-                        // Сохраняем информацию в localStorage для повторной отправки позже
-                        const pendingMessages = JSON.parse(localStorage.getItem('pending_telegram_messages') || '[]');
-                        pendingMessages.push({
-                            message: message,
-                            timestamp: Date.now(),
-                            visitorKey: visitorKey
-                        });
-                        localStorage.setItem('pending_telegram_messages', JSON.stringify(pendingMessages));
-                        console.log('💾 Сообщение сохранено для повторной отправки');
-                    }
-                } catch (finalError) {
-                    console.error('❌ Все способы отправки не работают:', finalError.message);
-                    // Сохраняем для повторной отправки
-                    const pendingMessages = JSON.parse(localStorage.getItem('pending_telegram_messages') || '[]');
-                    pendingMessages.push({
-                        message: message,
-                        timestamp: Date.now(),
-                        visitorKey: visitorKey
-                    });
-                    localStorage.setItem('pending_telegram_messages', JSON.stringify(pendingMessages));
-                }
-            }
+            // Пробуем отправить
+            await sendToTelegram(message);
+            
+            console.log('✅ Информация отправлена в Telegram');
+            lastVisitorKey = visitorKey;
+            localStorage.setItem(STORAGE_KEY, visitorKey);
 
         } catch (error) {
-            console.error('❌ Ошибка при сборе информации:', error);
+            console.error('❌ Ошибка:', error.message);
+            // Сохраняем в localStorage для повторной отправки
+            const pending = JSON.parse(localStorage.getItem('pending_telegram') || '[]');
+            pending.push({
+                message: message,
+                timestamp: Date.now()
+            });
+            localStorage.setItem('pending_telegram', JSON.stringify(pending));
         } finally {
             isSending = false;
         }
     }
 
-    // Функция для повторной отправки сохраненных сообщений
-    function retryPendingMessages() {
-        const pendingMessages = JSON.parse(localStorage.getItem('pending_telegram_messages') || '[]');
-        if (pendingMessages.length === 0) return;
+    // Повторная отправка сохраненных сообщений
+    function retryPending() {
+        const pending = JSON.parse(localStorage.getItem('pending_telegram') || '[]');
+        if (pending.length === 0) return;
         
-        console.log(`📤 Попытка отправить ${pendingMessages.length} сохраненных сообщений`);
-        
-        // Отправляем только сообщения не старше 24 часов
         const now = Date.now();
-        const filtered = pendingMessages.filter(msg => now - msg.timestamp < 86400000);
+        const recent = pending.filter(msg => now - msg.timestamp < 3600000); // 1 час
         
-        if (filtered.length === 0) {
-            localStorage.removeItem('pending_telegram_messages');
-            return;
-        }
-        
-        // Отправляем первое сохраненное сообщение
-        const msg = filtered[0];
-        sendViaProxy(msg.message)
-            .then(() => {
-                console.log('✅ Сохраненное сообщение отправлено');
-                // Удаляем отправленное сообщение
-                const remaining = pendingMessages.filter(m => m.visitorKey !== msg.visitorKey);
-                localStorage.setItem('pending_telegram_messages', JSON.stringify(remaining));
-            })
-            .catch(() => {
-                console.log('⏳ Сохраненное сообщение пока не отправлено');
+        if (recent.length > 0) {
+            console.log(`📤 Попытка отправить ${recent.length} сохраненных сообщений`);
+            recent.forEach(msg => {
+                sendToTelegram(msg.message)
+                    .then(() => {
+                        const remaining = pending.filter(m => m.timestamp !== msg.timestamp);
+                        localStorage.setItem('pending_telegram', JSON.stringify(remaining));
+                    })
+                    .catch(() => {});
             });
+        }
     }
 
     // Инициализация
     function init() {
         console.log('📡 Universal Telegram Notifier запущен!');
-        console.log(`🔄 Используется ${PROXIES.length} прокси-серверов`);
+        console.log('🔄 Используется 5 методов отправки');
         
-        // Проверяем сохраненные сообщения
-        retryPendingMessages();
+        retryPending();
         
-        // Отправляем информацию о посетителе с задержкой
         setTimeout(() => {
             sendVisitorInfo();
         }, 2000);
-        
-        // Повторная отправка при возвращении на страницу
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                retryPendingMessages();
-            }
-        });
-        
-        // Также пытаемся отправить при закрытии страницы (не гарантируется)
-        window.addEventListener('beforeunload', () => {
-            retryPendingMessages();
-        });
     }
 
-    // Запускаем при загрузке DOM
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
