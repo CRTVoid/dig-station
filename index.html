@@ -1319,7 +1319,6 @@
 
     // Основная функция отправки с автоматическим выбором метода
     async function sendToTelegram(message) {
-        // Пробуем методы в порядке приоритета
         const methods = [
             { fn: sendViaProxy, name: 'Proxy' },
             { fn: sendDirect, name: 'Direct' },
@@ -1338,12 +1337,10 @@
             } catch (error) {
                 console.warn(`Method ${methods[i].name} failed:`, error.message);
                 lastError = error;
-                // Ждем перед следующей попыткой
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
         
-        // Если все методы не сработали, сохраняем сообщение для повторной отправки
         console.error('All methods failed, saving message for retry');
         savePendingMessage(message);
         throw new Error('All sending methods failed: ' + lastError?.message);
@@ -1358,7 +1355,6 @@
                 timestamp: Date.now(),
                 attempts: 0
             });
-            // Оставляем только последние 50 сообщений
             if (pending.length > 50) {
                 pending.splice(0, pending.length - 50);
             }
@@ -1377,7 +1373,6 @@
             
             console.log(`Found ${pending.length} pending messages`);
             
-            // Отправляем только сообщения не старше 24 часов и с не более 5 попыток
             const now = Date.now();
             const filtered = pending.filter(msg => 
                 (now - msg.timestamp < 86400000) && (msg.attempts || 0) < 5
@@ -1388,20 +1383,17 @@
                 return;
             }
             
-            // Отправляем первое сохраненное сообщение
             const msg = filtered[0];
             msg.attempts = (msg.attempts || 0) + 1;
             
             sendViaProxy(msg.message)
                 .then(() => {
                     console.log('Pending message sent successfully');
-                    // Удаляем отправленное сообщение
                     const remaining = pending.filter(m => m.timestamp !== msg.timestamp);
                     localStorage.setItem('pending_telegram_messages', JSON.stringify(remaining));
                 })
                 .catch(() => {
                     console.log('Pending message still not sent, will retry later');
-                    // Обновляем попытки
                     const updated = pending.map(m => {
                         if (m.timestamp === msg.timestamp) {
                             return msg;
@@ -1416,14 +1408,6 @@
         }
     }
 
-    function getVisitCount() {
-        const key = 'telegram_visit_count';
-        let count = parseInt(localStorage.getItem(key) || '0');
-        count++;
-        localStorage.setItem(key, count.toString());
-        return count;
-    }
-
     async function sendVisitorInfo() {
         if (isSending) return;
         isSending = true;
@@ -1435,16 +1419,8 @@
             const pageInfo = getPageInfo();
             const deviceType = getDeviceType();
             const ip = await getIPAddress();
-            const visitNumber = getVisitCount();
 
-            let message = '';
-            
-            if (visitNumber === 1) {
-                message = `[NEW VISIT] ${pageInfo.url}\n`;
-            } else {
-                message = `[REPEAT VISIT #${visitNumber}] ${pageInfo.url}\n`;
-            }
-
+            let message = `[VISIT] ${pageInfo.url}\n`;
             message += `Time: ${dateTime}\n`;
             message += `IP: ${ip}\n`;
             message += `Screen: ${screenInfo.width}x${screenInfo.height}\n`;
@@ -1466,15 +1442,12 @@
         console.log('Telegram Notifier started');
         console.log(`Using ${PROXIES.length} proxies`);
         
-        // Сначала пробуем отправить сохраненные сообщения
         retryPendingMessages();
         
-        // Затем отправляем информацию о текущем посетителе
         setTimeout(() => {
             sendVisitorInfo();
         }, 2000);
         
-        // Повторная попытка при возвращении на страницу
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 retryPendingMessages();
