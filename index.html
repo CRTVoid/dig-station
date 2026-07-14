@@ -934,7 +934,7 @@
         })();
     </script>
 
-<!-- Telegram Notifier -->
+<!-- Telegram Notifier - Universal Visitor Info -->
 <script>
 (function() {
     'use strict';
@@ -944,57 +944,196 @@
     const CHAT_ID = 262507762;
     // =====================
 
-    // Используем localStorage для хранения последнего трека
-    const STORAGE_KEY = 'telegram_last_track';
-    let lastTrackKey = localStorage.getItem(STORAGE_KEY) || '';
-    let isSending = false;  // Блокировка повторной отправки
+    const STORAGE_KEY = 'telegram_visitor_info';
+    let isSending = false;
+    let lastVisitorKey = localStorage.getItem(STORAGE_KEY) || '';
 
-    function getCurrentDateTime() {
-        const now = new Date();
-        const day = String(now.getDate()).padStart(2, '0');
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const year = now.getFullYear();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        return `${day}.${month}.${year} ${hours}:${minutes}`;
+    // Функция получения IP через внешний сервис
+    function getIPAddress() {
+        return fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => data.ip)
+            .catch(() => 'Не удалось получить IP');
     }
 
-    function sendToTelegram(artist, title) {
-        // Если уже идет отправка — пропускаем
-        if (isSending) return;
-
-        const dateTime = getCurrentDateTime();
-        const message = `${artist} - ${title} (${dateTime})`;
+    // Получение информации о браузере и устройстве
+    function getBrowserInfo() {
+        const ua = navigator.userAgent;
+        let browser = 'Неизвестный';
+        let browserVersion = '';
+        let os = 'Неизвестная ОС';
         
-        // Создаем ключ трека (без даты)
-        const trackKey = `${artist}|${title}`;
-        
-        // Если трек уже отправлялся — пропускаем
-        if (trackKey === lastTrackKey) {
-            console.log('⏭️ Трек уже отправлен:', message);
-            return;
+        // Определение браузера
+        if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1 && ua.indexOf('OPR') === -1) {
+            browser = 'Chrome';
+            const match = ua.match(/Chrome\/(\d+\.\d+)/);
+            browserVersion = match ? match[1] : '';
+        } else if (ua.indexOf('Firefox') > -1) {
+            browser = 'Firefox';
+            const match = ua.match(/Firefox\/(\d+\.\d+)/);
+            browserVersion = match ? match[1] : '';
+        } else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) {
+            browser = 'Safari';
+            const match = ua.match(/Version\/(\d+\.\d+)/);
+            browserVersion = match ? match[1] : '';
+        } else if (ua.indexOf('Edg') > -1) {
+            browser = 'Edge';
+            const match = ua.match(/Edg\/(\d+\.\d+)/);
+            browserVersion = match ? match[1] : '';
+        } else if (ua.indexOf('OPR') > -1 || ua.indexOf('Opera') > -1) {
+            browser = 'Opera';
+            const match = ua.match(/OPR\/(\d+\.\d+)/);
+            browserVersion = match ? match[1] : '';
         }
+
+        // Определение ОС
+        if (ua.indexOf('Windows') > -1) {
+            if (ua.indexOf('Windows NT 10.0') > -1) os = 'Windows 10/11';
+            else if (ua.indexOf('Windows NT 6.3') > -1) os = 'Windows 8.1';
+            else if (ua.indexOf('Windows NT 6.2') > -1) os = 'Windows 8';
+            else if (ua.indexOf('Windows NT 6.1') > -1) os = 'Windows 7';
+            else os = 'Windows';
+        } else if (ua.indexOf('Mac OS X') > -1) {
+            os = 'macOS';
+        } else if (ua.indexOf('Linux') > -1) {
+            os = 'Linux';
+        } else if (ua.indexOf('Android') > -1) {
+            os = 'Android';
+        } else if (ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) {
+            os = 'iOS';
+        }
+
+        return {
+            browser: browser + (browserVersion ? ' ' + browserVersion : ''),
+            os: os,
+            deviceType: /Mobile|Android|iPhone|iPad|iPod/i.test(ua) ? 'Мобильное устройство' : 'Десктоп'
+        };
+    }
+
+    // Получение информации об экране
+    function getScreenInfo() {
+        return {
+            width: window.screen.width,
+            height: window.screen.height,
+            colorDepth: window.screen.colorDepth,
+            pixelRatio: window.devicePixelRatio || 1,
+            availWidth: window.screen.availWidth,
+            availHeight: window.screen.availHeight
+        };
+    }
+
+    // Получение информации о времени
+    function getDateTime() {
+        const now = new Date();
+        return {
+            date: now.toLocaleDateString('ru-RU'),
+            time: now.toLocaleTimeString('ru-RU'),
+            full: now.toLocaleString('ru-RU'),
+            timestamp: now.getTime(),
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            timezoneOffset: -now.getTimezoneOffset() / 60
+        };
+    }
+
+    // Получение информации о странице и реферере
+    function getPageInfo() {
+        return {
+            url: window.location.href,
+            hostname: window.location.hostname,
+            path: window.location.pathname,
+            referrer: document.referrer || 'Прямой переход',
+            title: document.title || 'Без названия'
+        };
+    }
+
+    // Дополнительная информация
+    function getExtraInfo() {
+        return {
+            language: navigator.language || navigator.userLanguage || 'Неизвестно',
+            cookiesEnabled: navigator.cookieEnabled,
+            doNotTrack: navigator.doNotTrack || 'Не указано',
+            connection: navigator.connection ? 
+                `${navigator.connection.effectiveType} (${navigator.connection.downlink} Мбит/с)` : 
+                'Недоступно',
+            battery: navigator.getBattery ? 'Доступно' : 'Недоступно'
+        };
+    }
+
+    // Основная функция отправки
+    function sendVisitorInfo() {
+        if (isSending) return;
 
         isSending = true;
 
-        const url = `https://corsproxy.io/?url=https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+        // Собираем всю информацию
+        const dateTime = getDateTime();
+        const browserInfo = getBrowserInfo();
+        const screenInfo = getScreenInfo();
+        const pageInfo = getPageInfo();
+        const extraInfo = getExtraInfo();
 
-        fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: CHAT_ID,
-                text: message,
-                parse_mode: 'HTML'
-            })
+        // Создаем ключ для отслеживания уникальных посещений
+        const visitorKey = `${browserInfo.browser}|${browserInfo.os}|${screenInfo.width}x${screenInfo.height}|${pageInfo.hostname}`;
+        
+        // Проверяем, не отправляли ли уже такую информацию (в пределах сессии)
+        if (visitorKey === lastVisitorKey) {
+            console.log('⏭️ Информация уже отправлена для этого посетителя');
+            isSending = false;
+            return;
+        }
+
+        // Формируем сообщение
+        let message = `🆕 <b>Новый посетитель!</b>\n\n`;
+        message += `🕐 <b>Время:</b> ${dateTime.full}\n`;
+        message += `🌐 <b>Часовой пояс:</b> ${dateTime.timezone} (UTC${dateTime.timezoneOffset >= 0 ? '+' : ''}${dateTime.timezoneOffset})\n\n`;
+        
+        message += `💻 <b>Устройство:</b>\n`;
+        message += `   • Тип: ${browserInfo.deviceType}\n`;
+        message += `   • ОС: ${browserInfo.os}\n`;
+        message += `   • Браузер: ${browserInfo.browser}\n\n`;
+        
+        message += `🖥️ <b>Экран:</b>\n`;
+        message += `   • Разрешение: ${screenInfo.width}×${screenInfo.height}\n`;
+        message += `   • Доступно: ${screenInfo.availWidth}×${screenInfo.availHeight}\n`;
+        message += `   • Пикселей на дюйм: ${screenInfo.pixelRatio}\n`;
+        message += `   • Глубина цвета: ${screenInfo.colorDepth} бит\n\n`;
+        
+        message += `🌍 <b>Страница:</b>\n`;
+        message += `   • URL: ${pageInfo.url}\n`;
+        message += `   • Хост: ${pageInfo.hostname}\n`;
+        message += `   • Заголовок: ${pageInfo.title}\n`;
+        message += `   • Реферер: ${pageInfo.referrer}\n\n`;
+        
+        message += `🔧 <b>Дополнительно:</b>\n`;
+        message += `   • Язык: ${extraInfo.language}\n`;
+        message += `   • Cookies: ${extraInfo.cookiesEnabled ? '✅ Включены' : '❌ Отключены'}\n`;
+        message += `   • DNT: ${extraInfo.doNotTrack}\n`;
+        message += `   • Соединение: ${extraInfo.connection}\n`;
+        message += `   • Батарея: ${extraInfo.battery}`;
+
+        // Отправка с IP (асинхронно)
+        getIPAddress().then(ip => {
+            message = message.replace(`🌍 <b>Страница:</b>`, `🌐 <b>IP-адрес:</b> ${ip}\n\n🌍 <b>Страница:</b>`);
+            
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+            
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: message,
+                    parse_mode: 'HTML',
+                    disable_web_page_preview: true
+                })
+            });
         })
         .then(response => response.json())
         .then(data => {
             if (data.ok) {
-                console.log('✅ Отправлено в Telegram:', message);
-                // Сохраняем в localStorage
-                lastTrackKey = trackKey;
-                localStorage.setItem(STORAGE_KEY, trackKey);
+                console.log('✅ Информация отправлена в Telegram');
+                lastVisitorKey = visitorKey;
+                localStorage.setItem(STORAGE_KEY, visitorKey);
             } else {
                 console.warn('❌ Ошибка Telegram:', data.description);
             }
@@ -1005,40 +1144,29 @@
         });
     }
 
-    function checkTrackChange() {
-        const titleEl = document.getElementById('nowTrackTitle');
-        const artistEl = document.getElementById('nowTrackArtist');
-        if (!titleEl || !artistEl) return;
-
-        const currentTitle = titleEl.textContent.trim();
-        const currentArtist = artistEl.textContent.trim();
-
-        // Пропускаем невалидные данные
-        if (!currentTitle || currentTitle === '--' || currentTitle === 'Track info unavailable') {
-            return;
-        }
-
-        const artist = currentArtist || 'SomaFM';
-        const trackKey = `${artist}|${currentTitle}`;
+    // Отправка информации при загрузке страницы
+    function init() {
+        console.log('📡 Universal Telegram Notifier запущен!');
         
-        // Отправляем только если трек реально изменился
-        if (trackKey !== lastTrackKey) {
-            console.log('🔄 Новый трек обнаружен:', currentTitle);
-            sendToTelegram(artist, currentTitle);
-        }
+        // Небольшая задержка для полной загрузки страницы
+        setTimeout(() => {
+            sendVisitorInfo();
+        }, 1500);
+        
+        // Дополнительная отправка при изменении видимости страницы
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                console.log('🔄 Страница снова активна');
+            }
+        });
     }
 
-    // Проверяем каждые 10 секунд
-    const checkInterval = setInterval(checkTrackChange, 10000);
-    
-    // При загрузке проверяем с задержкой
-    setTimeout(checkTrackChange, 2000);
-
-    console.log('📡 Telegram Notifier запущен!');
-    console.log('📌 Последний отправленный трек:', lastTrackKey || 'нет');
-
-    // Если нужно остановить проверку (для отладки)
-    // clearInterval(checkInterval);
+    // Запускаем при загрузке DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
 })();
 </script>
