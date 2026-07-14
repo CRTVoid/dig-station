@@ -933,8 +933,7 @@
 
         })();
     </script>
-<!-- Telegram Notifier -->
-<!-- Telegram Notifier -->
+
 <!-- Telegram Notifier -->
 <script>
 (function() {
@@ -945,8 +944,10 @@
     const CHAT_ID = 262507762;
     // =====================
 
-    let lastTrackKey = '';  // Храним уникальный ключ трека
-    let lastMessage = '';   // Храним последнее отправленное сообщение
+    // Используем localStorage для хранения последнего трека
+    const STORAGE_KEY = 'telegram_last_track';
+    let lastTrackKey = localStorage.getItem(STORAGE_KEY) || '';
+    let isSending = false;  // Блокировка повторной отправки
 
     function getCurrentDateTime() {
         const now = new Date();
@@ -959,20 +960,28 @@
     }
 
     function sendToTelegram(artist, title) {
+        // Если уже идет отправка — пропускаем
+        if (isSending) return;
+
         const dateTime = getCurrentDateTime();
         const message = `${artist} - ${title} (${dateTime})`;
         
-        // Если такое же сообщение уже отправляли — пропускаем
-        if (message === lastMessage) return;
+        // Создаем ключ трека (без даты)
+        const trackKey = `${artist}|${title}`;
+        
+        // Если трек уже отправлялся — пропускаем
+        if (trackKey === lastTrackKey) {
+            console.log('⏭️ Трек уже отправлен:', message);
+            return;
+        }
 
-        // Используем CORS-прокси
+        isSending = true;
+
         const url = `https://corsproxy.io/?url=https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
 
         fetch(url, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chat_id: CHAT_ID,
                 text: message,
@@ -983,12 +992,17 @@
         .then(data => {
             if (data.ok) {
                 console.log('✅ Отправлено в Telegram:', message);
-                lastMessage = message;  // Запоминаем отправленное сообщение
+                // Сохраняем в localStorage
+                lastTrackKey = trackKey;
+                localStorage.setItem(STORAGE_KEY, trackKey);
             } else {
                 console.warn('❌ Ошибка Telegram:', data.description);
             }
         })
-        .catch(err => console.error('❌ Ошибка сети:', err));
+        .catch(err => console.error('❌ Ошибка сети:', err))
+        .finally(() => {
+            isSending = false;
+        });
     }
 
     function checkTrackChange() {
@@ -999,27 +1013,33 @@
         const currentTitle = titleEl.textContent.trim();
         const currentArtist = artistEl.textContent.trim();
 
-        // Пропускаем, если данные невалидны
-        if (currentTitle === '--' || currentTitle === 'Track info unavailable') return;
+        // Пропускаем невалидные данные
+        if (!currentTitle || currentTitle === '--' || currentTitle === 'Track info unavailable') {
+            return;
+        }
 
-        // Создаем уникальный ключ трека
-        const trackKey = `${currentArtist}|${currentTitle}`;
+        const artist = currentArtist || 'SomaFM';
+        const trackKey = `${artist}|${currentTitle}`;
         
         // Отправляем только если трек реально изменился
         if (trackKey !== lastTrackKey) {
-            const artist = currentArtist || 'SomaFM';
+            console.log('🔄 Новый трек обнаружен:', currentTitle);
             sendToTelegram(artist, currentTitle);
-            lastTrackKey = trackKey;  // Запоминаем новый трек
         }
     }
 
-    // Проверяем реже — каждые 10 секунд
-    setInterval(checkTrackChange, 10000);
+    // Проверяем каждые 10 секунд
+    const checkInterval = setInterval(checkTrackChange, 10000);
     
     // При загрузке проверяем с задержкой
-    setTimeout(checkTrackChange, 3000);
+    setTimeout(checkTrackChange, 2000);
 
     console.log('📡 Telegram Notifier запущен!');
+    console.log('📌 Последний отправленный трек:', lastTrackKey || 'нет');
+
+    // Если нужно остановить проверку (для отладки)
+    // clearInterval(checkInterval);
+
 })();
 </script>
 </body>
