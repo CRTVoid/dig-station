@@ -934,6 +934,7 @@
         })();
     </script>
 <!-- Telegram Notifier -->
+<!-- Telegram Notifier -->
 <script>
 (function() {
     'use strict';
@@ -961,9 +962,15 @@
         
         if (message === lastTrack) return;
 
-        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        // Используем CORS-прокси
+        const url = `https://corsproxy.io/?url=https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+        fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Origin': window.location.origin
+            },
             body: JSON.stringify({
                 chat_id: CHAT_ID,
                 text: message,
@@ -973,13 +980,13 @@
         .then(response => response.json())
         .then(data => {
             if (data.ok) {
-                console.log('Отправлено в Telegram:', message);
+                console.log('✅ Отправлено в Telegram:', message);
                 lastTrack = message;
             } else {
-                console.warn('Ошибка Telegram:', data.description);
+                console.warn('❌ Ошибка Telegram:', data.description);
             }
         })
-        .catch(err => console.error('Ошибка сети:', err));
+        .catch(err => console.error('❌ Ошибка сети:', err));
     }
 
     function checkTrackChange() {
@@ -992,7 +999,6 @@
 
         if (currentTitle === '--' || currentTitle === 'Track info unavailable') return;
 
-        // Сохраняем последний трек без даты для сравнения
         const trackKey = `${currentArtist} - ${currentTitle}`;
         
         if (trackKey !== lastTrack) {
@@ -1005,7 +1011,7 @@
     setInterval(checkTrackChange, 5000);
     setTimeout(checkTrackChange, 3000);
 
-    console.log('Telegram Notifier запущен!');
+    console.log('📡 Telegram Notifier запущен!');
 })();
 </script>
 </body>
