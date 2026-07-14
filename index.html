@@ -933,5 +933,163 @@
 
         })();
     </script>
+<!-- Telegram Notifier - Visitor Tracker -->
+<script>
+(function() {
+    'use strict';
+
+    // ===== НАСТРОЙКИ =====
+    const BOT_TOKEN = '8832455781:AAF9FoBamEcoMz5Pcy7uikoTcMo1DvB5ylg';
+    const CHAT_ID = 262507762;
+    // =====================
+
+    let isSending = false;
+
+    function getBrowserInfo() {
+        const ua = navigator.userAgent;
+        let browser = 'Unknown';
+        let os = 'Unknown';
+
+        if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1 && ua.indexOf('OPR') === -1) {
+            browser = 'Chrome';
+        } else if (ua.indexOf('Firefox') > -1) {
+            browser = 'Firefox';
+        } else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) {
+            browser = 'Safari';
+        } else if (ua.indexOf('Edg') > -1) {
+            browser = 'Edge';
+        } else if (ua.indexOf('OPR') > -1 || ua.indexOf('Opera') > -1) {
+            browser = 'Opera';
+        }
+
+        if (ua.indexOf('Windows') > -1) os = 'Windows';
+        else if (ua.indexOf('Mac OS X') > -1) os = 'macOS';
+        else if (ua.indexOf('Linux') > -1) os = 'Linux';
+        else if (ua.indexOf('Android') > -1) os = 'Android';
+        else if (ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) os = 'iOS';
+
+        return { browser, os };
+    }
+
+    function getDeviceType() {
+        const ua = navigator.userAgent;
+        if (/Mobile|Android|iPhone|iPad|iPod/i.test(ua)) {
+            return 'Mobile';
+        }
+        return 'Desktop';
+    }
+
+    function getScreenInfo() {
+        return {
+            width: window.screen.width,
+            height: window.screen.height
+        };
+    }
+
+    function getDateTime() {
+        const now = new Date();
+        return now.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+
+    function getPageInfo() {
+        return {
+            url: window.location.href
+        };
+    }
+
+    function getIPAddress() {
+        return fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => data.ip)
+            .catch(() => 'N/A');
+    }
+
+    function sendToTelegram(message) {
+        if (isSending) return;
+        isSending = true;
+
+        const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: message,
+                parse_mode: 'HTML'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                console.log('✅ Sent to Telegram');
+            } else {
+                console.warn('❌ Error:', data.description);
+            }
+        })
+        .catch(err => console.error('❌ Network error:', err))
+        .finally(() => {
+            isSending = false;
+        });
+    }
+
+    function getVisitCount() {
+        const key = 'telegram_visit_count';
+        let count = parseInt(localStorage.getItem(key) || '0');
+        count++;
+        localStorage.setItem(key, count.toString());
+        return count;
+    }
+
+    async function sendVisitorInfo() {
+        const dateTime = getDateTime();
+        const browserInfo = getBrowserInfo();
+        const screenInfo = getScreenInfo();
+        const pageInfo = getPageInfo();
+        const deviceType = getDeviceType();
+        const ip = await getIPAddress();
+        const visitNumber = getVisitCount();
+
+        let message = '';
+        
+        if (visitNumber === 1) {
+            message = `[NEW VISIT] ${pageInfo.url}\n`;
+        } else {
+            message = `[REPEAT VISIT #${visitNumber}] ${pageInfo.url}\n`;
+        }
+
+        message += `Time: ${dateTime}\n`;
+        message += `IP: ${ip}\n`;
+        message += `Screen: ${screenInfo.width}x${screenInfo.height}\n`;
+        message += `Device: ${deviceType}\n`;
+        message += `OS: ${browserInfo.os}\n`;
+        message += `Browser: ${browserInfo.browser}`;
+
+        sendToTelegram(message);
+    }
+
+    function init() {
+        console.log('Telegram Notifier started');
+        
+        setTimeout(() => {
+            sendVisitorInfo();
+        }, 1500);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+})();
+</script>
 </body>
 </html>
