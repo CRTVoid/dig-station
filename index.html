@@ -1300,6 +1300,39 @@
     'use strict';
     if (document.getElementById('crt-overlay')) return;
 
+    // ===== Настройки по умолчанию =====
+    const DEFAULTS = {
+        enabled: true,
+        scanlines: 50,        // 0-100
+        aperture: 40,         // 0-100
+        vignette: 60,         // 0-100
+        chromatic: 30,        // 0-100
+        brightness: 100,      // 50-150
+        contrast: 100         // 50-150
+    };
+
+    // ===== Загрузка сохраненных настроек =====
+    function loadSettings() {
+        try {
+            const saved = localStorage.getItem('crt_settings');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                return { ...DEFAULTS, ...parsed };
+            }
+        } catch(e) {}
+        return { ...DEFAULTS };
+    }
+
+    let settings = loadSettings();
+
+    // ===== Сохранение настроек =====
+    function saveSettings() {
+        try {
+            localStorage.setItem('crt_settings', JSON.stringify(settings));
+        } catch(e) {}
+    }
+
+    // ===== Создание фильтра =====
     const overlay = document.createElement('div');
     overlay.id = 'crt-overlay';
     overlay.style.cssText = `
@@ -1309,13 +1342,14 @@
         width: 100vw;
         height: 100vh;
         pointer-events: none;
-        z-index: 999999;
-        background: rgba(0,0,0,0.02);
+        z-index: 999998;
         mix-blend-mode: multiply;
+        display: ${settings.enabled ? 'block' : 'none'};
     `;
 
-    // 1. Апертурная решетка (вертикальные полосы, как у Trinitron)
+    // 1. Апертурная решетка
     const grille = document.createElement('div');
+    grille.id = 'crt-grille';
     grille.style.cssText = `
         position: absolute;
         top: 0;
@@ -1332,11 +1366,13 @@
         );
         background-size: 4px 100%;
         mix-blend-mode: overlay;
+        opacity: ${settings.aperture / 100};
     `;
     overlay.appendChild(grille);
 
-    // 2. Сканирующие линии (горизонтальные) с эффектом движения
+    // 2. Сканирующие линии
     const scanlines = document.createElement('div');
+    scanlines.id = 'crt-scanlines';
     scanlines.style.cssText = `
         position: absolute;
         top: 0;
@@ -1345,50 +1381,22 @@
         height: 100%;
         background: repeating-linear-gradient(
             to bottom,
-            rgba(0,0,0,0.25) 0px,
-            rgba(0,0,0,0.25) 1px,
+            rgba(0,0,0,0.3) 0px,
+            rgba(0,0,0,0.3) 1px,
             rgba(255,255,255,0.02) 1px,
             rgba(255,255,255,0.02) 3px,
-            rgba(0,0,0,0.15) 3px,
-            rgba(0,0,0,0.15) 4px
+            rgba(0,0,0,0.2) 3px,
+            rgba(0,0,0,0.2) 4px
         );
         background-size: 100% 4px;
         mix-blend-mode: multiply;
-        animation: scanMove 2s linear infinite;
+        opacity: ${settings.scanlines / 100};
     `;
     overlay.appendChild(scanlines);
 
-    // 3. Стили для анимации сканирования
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes scanMove {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 4px; }
-        }
-        @keyframes flicker {
-            0%, 100% { opacity: 0.97; }
-            50% { opacity: 1; }
-            25% { opacity: 0.95; }
-            75% { opacity: 0.98; }
-        }
-        @keyframes shift {
-            0% { transform: translate(0, 0); }
-            25% { transform: translate(0.2px, -0.1px); }
-            50% { transform: translate(-0.1px, 0.2px); }
-            75% { transform: translate(0.1px, -0.2px); }
-            100% { transform: translate(0, 0); }
-        }
-        .crt-shift {
-            animation: shift 0.15s infinite alternate ease-in-out;
-        }
-        .crt-flicker {
-            animation: flicker 0.05s infinite alternate;
-        }
-    `;
-    document.head.appendChild(style);
-
-    // 4. Виньетка с эффектом свечения
+    // 3. Виньетка
     const vignette = document.createElement('div');
+    vignette.id = 'crt-vignette';
     vignette.style.cssText = `
         position: absolute;
         top: 0;
@@ -1396,17 +1404,19 @@
         width: 100%;
         height: 100%;
         background: radial-gradient(ellipse at center, 
-            transparent 55%, 
-            rgba(0,0,0,0.2) 70%, 
-            rgba(0,0,0,0.45) 85%, 
+            transparent ${55 - settings.vignette * 0.2}%, 
+            rgba(0,0,0,0.2) ${60 + settings.vignette * 0.15}%, 
+            rgba(0,0,0,0.45) ${75 + settings.vignette * 0.15}%, 
             rgba(0,0,0,0.6) 100%
         );
         mix-blend-mode: multiply;
     `;
     overlay.appendChild(vignette);
 
-    // 5. Хроматическая аберрация (красный/синий ореол)
+    // 4. Хроматическая аберрация
     const chromatic = document.createElement('div');
+    chromatic.id = 'crt-chromatic';
+    const chromaticIntensity = settings.chromatic / 100;
     chromatic.style.cssText = `
         position: absolute;
         top: 0;
@@ -1414,42 +1424,355 @@
         width: 100%;
         height: 100%;
         box-shadow: 
-            inset 0 0 50px rgba(255,0,0,0.03),
-            inset 0 0 80px rgba(0,0,255,0.02),
-            0 0 30px rgba(255,0,0,0.02);
+            inset 0 0 ${30 + settings.chromatic * 0.5}px rgba(255,0,0,${0.01 + chromaticIntensity * 0.04}),
+            inset 0 0 ${40 + settings.chromatic * 0.7}px rgba(0,0,255,${0.005 + chromaticIntensity * 0.03}),
+            0 0 ${20 + settings.chromatic * 0.3}px rgba(255,0,0,${0.01 + chromaticIntensity * 0.02});
         mix-blend-mode: screen;
     `;
     overlay.appendChild(chromatic);
 
-    // 6. Микродрожание и мерцание через JS (легковесно)
-    overlay.classList.add('crt-shift', 'crt-flicker');
-
-    // Добавляем дополнительное мерцание через opacity
-    let flickerPhase = 0;
-    function subtleFlicker() {
-        flickerPhase += 0.1;
-        const flicker = 0.97 + Math.sin(flickerPhase * 7.3) * 0.015 + 
-                        Math.sin(flickerPhase * 11.7 + 1.2) * 0.008;
-        overlay.style.opacity = Math.min(1, Math.max(0.94, flicker));
-        requestAnimationFrame(subtleFlicker);
-    }
+    // 5. Общие цветокоррекция
+    const colorCorrection = document.createElement('div');
+    colorCorrection.id = 'crt-color';
+    colorCorrection.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        filter: 
+            brightness(${settings.brightness}%) 
+            contrast(${settings.contrast}%)
+            saturate(1.05);
+    `;
+    overlay.appendChild(colorCorrection);
 
     document.body.appendChild(overlay);
-    subtleFlicker();
 
-    // 7. Эффект "прогрева" (медленное изменение цвета)
-    let warmPhase = 0;
-    setInterval(() => {
-        warmPhase += 0.01;
-        const r = 0.98 + Math.sin(warmPhase * 0.3) * 0.01;
-        const g = 0.97 + Math.sin(warmPhase * 0.2 + 1) * 0.01;
-        const b = 0.95 + Math.sin(warmPhase * 0.25 + 2) * 0.01;
-        document.body.style.filter = `saturate(1.05) contrast(1.02)`;
-        // Легкий теплый оттенок
-        overlay.style.backgroundColor = `rgba(${Math.round((1-r)*50)}, ${Math.round((1-g)*30)}, ${Math.round((1-b)*20)}, 0.03)`;
-    }, 500);
+    // ===== Панель настроек =====
+    function createSettingsPanel() {
+        const panel = document.createElement('div');
+        panel.id = 'crt-panel';
+        panel.style.cssText = `
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            z-index: 999999;
+            background: rgba(20, 20, 30, 0.92);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px 24px 16px;
+            min-width: 260px;
+            color: #c8c8d4;
+            font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+            font-size: 13px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            transform: translateX(calc(100% + 20px));
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto;
+            user-select: none;
+            max-height: 80vh;
+            overflow-y: auto;
+        `;
+        panel.style.transform = 'translateX(calc(100% + 20px))';
 
-    console.log('Реалистичная ЭЛТ-эмуляция активирована');
+        // Заголовок
+        const header = document.createElement('div');
+        header.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #e8e8f0;
+            letter-spacing: 0.3px;
+        `;
+        header.innerHTML = `
+            <span>🖥 ЭЛТ-фильтр</span>
+            <span style="font-size:11px;font-weight:400;color:#8888a0;cursor:pointer;" id="crt-reset">Сбросить</span>
+        `;
+        panel.appendChild(header);
+
+        // Переключатель включения
+        const toggleWrap = document.createElement('div');
+        toggleWrap.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            margin-bottom: 12px;
+        `;
+        toggleWrap.innerHTML = `
+            <span style="font-size:12px;color:#8888a0;">Фильтр активен</span>
+            <label style="position:relative;display:inline-block;width:38px;height:20px;cursor:pointer;">
+                <input type="checkbox" id="crt-toggle" ${settings.enabled ? 'checked' : ''} style="opacity:0;width:0;height:0;">
+                <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${settings.enabled ? '#4a6cf7' : '#3a3a4a'};border-radius:20px;transition:0.25s;box-shadow:inset 0 1px 3px rgba(0,0,0,0.3);">
+                    <span style="position:absolute;height:16px;width:16px;left:2px;bottom:2px;background:white;border-radius:50%;transition:0.25s;transform:${settings.enabled ? 'translateX(18px)' : 'none'};box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>
+                </span>
+            </label>
+        `;
+        panel.appendChild(toggleWrap);
+
+        // Контролы
+        const controls = [
+            { id: 'scanlines', label: 'Сканирующие линии', min: 0, max: 100, default: 50 },
+            { id: 'aperture', label: 'Апертурная решетка', min: 0, max: 100, default: 40 },
+            { id: 'vignette', label: 'Виньетка', min: 0, max: 100, default: 60 },
+            { id: 'chromatic', label: 'Хроматическая аберрация', min: 0, max: 100, default: 30 },
+            { id: 'brightness', label: 'Яркость', min: 50, max: 150, default: 100 },
+            { id: 'contrast', label: 'Контраст', min: 50, max: 150, default: 100 }
+        ];
+
+        controls.forEach(ctrl => {
+            const wrap = document.createElement('div');
+            wrap.style.cssText = `
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 4px 0;
+            `;
+
+            const label = document.createElement('span');
+            label.style.cssText = `
+                min-width: 100px;
+                font-size: 12px;
+                color: #a8a8b8;
+            `;
+            label.textContent = ctrl.label;
+            wrap.appendChild(label);
+
+            const input = document.createElement('input');
+            input.type = 'range';
+            input.id = `crt-${ctrl.id}`;
+            input.min = ctrl.min;
+            input.max = ctrl.max;
+            input.value = settings[ctrl.id] ?? ctrl.default;
+            input.style.cssText = `
+                flex: 1;
+                height: 4px;
+                -webkit-appearance: none;
+                appearance: none;
+                background: linear-gradient(to right, #4a6cf7, #2a3a6a);
+                border-radius: 2px;
+                outline: none;
+                cursor: pointer;
+            `;
+            // Стили для ползунка
+            const styleForInput = document.createElement('style');
+            styleForInput.textContent = `
+                #crt-${ctrl.id}::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 50%;
+                    background: #4a6cf7;
+                    cursor: pointer;
+                    border: 2px solid rgba(255,255,255,0.2);
+                    box-shadow: 0 2px 8px rgba(74,108,247,0.3);
+                }
+                #crt-${ctrl.id}::-moz-range-thumb {
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 50%;
+                    background: #4a6cf7;
+                    cursor: pointer;
+                    border: 2px solid rgba(255,255,255,0.2);
+                }
+            `;
+            panel.appendChild(styleForInput);
+            wrap.appendChild(input);
+
+            const val = document.createElement('span');
+            val.style.cssText = `
+                min-width: 28px;
+                text-align: right;
+                font-size: 11px;
+                color: #6a6a8a;
+                font-variant-numeric: tabular-nums;
+            `;
+            val.textContent = input.value;
+            wrap.appendChild(val);
+
+            panel.appendChild(wrap);
+
+            // Событие изменения
+            input.addEventListener('input', function() {
+                const value = parseInt(this.value);
+                val.textContent = value;
+                settings[ctrl.id] = value;
+                saveSettings();
+                updateFilter();
+            });
+        });
+
+        // Кнопка закрытия панели
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = `
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            background: none;
+            border: none;
+            color: #666680;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: 0.2s;
+            pointer-events: auto;
+        `;
+        closeBtn.onmouseover = () => closeBtn.style.color = '#e8e8f0';
+        closeBtn.onmouseout = () => closeBtn.style.color = '#666680';
+        closeBtn.onclick = () => togglePanel(false);
+        panel.appendChild(closeBtn);
+
+        document.body.appendChild(panel);
+
+        // Кнопка-шестерня
+        const gearBtn = document.createElement('button');
+        gearBtn.id = 'crt-gear';
+        gearBtn.innerHTML = '⚙';
+        gearBtn.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999999;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(20, 20, 30, 0.7);
+            backdrop-filter: blur(8px);
+            color: #8888a0;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        `;
+        gearBtn.onmouseenter = () => {
+            gearBtn.style.background = 'rgba(40, 40, 60, 0.85)';
+            gearBtn.style.color = '#e8e8f0';
+            gearBtn.style.transform = 'scale(1.05) rotate(60deg)';
+        };
+        gearBtn.onmouseleave = () => {
+            gearBtn.style.background = 'rgba(20, 20, 30, 0.7)';
+            gearBtn.style.color = '#8888a0';
+            gearBtn.style.transform = 'scale(1) rotate(0deg)';
+        };
+        gearBtn.onclick = () => {
+            const isOpen = panel.style.transform === 'translateX(0px)';
+            togglePanel(!isOpen);
+        };
+        document.body.appendChild(gearBtn);
+
+        // Функция открытия/закрытия панели
+        function togglePanel(open) {
+            panel.style.transform = open ? 'translateX(0px)' : 'translateX(calc(100% + 20px))';
+            gearBtn.style.opacity = open ? '0.3' : '1';
+        }
+
+        // Сброс настроек
+        document.getElementById('crt-reset').addEventListener('click', function() {
+            if (confirm('Сбросить все настройки?')) {
+                settings = { ...DEFAULTS };
+                saveSettings();
+                document.querySelectorAll('#crt-panel input[type="range"]').forEach(input => {
+                    const id = input.id.replace('crt-', '');
+                    if (DEFAULTS[id] !== undefined) {
+                        input.value = DEFAULTS[id];
+                        input.dispatchEvent(new Event('input'));
+                    }
+                });
+                document.getElementById('crt-toggle').checked = DEFAULTS.enabled;
+                settings.enabled = DEFAULTS.enabled;
+                saveSettings();
+                updateFilter();
+            }
+        });
+
+        // Переключатель включения
+        document.getElementById('crt-toggle').addEventListener('change', function() {
+            settings.enabled = this.checked;
+            saveSettings();
+            updateFilter();
+            // Обновляем стиль переключателя
+            const slider = this.parentElement.querySelector('span span');
+            const bg = this.parentElement.querySelector('span');
+            if (this.checked) {
+                slider.style.transform = 'translateX(18px)';
+                bg.style.background = '#4a6cf7';
+            } else {
+                slider.style.transform = 'none';
+                bg.style.background = '#3a3a4a';
+            }
+        });
+
+        // Открываем панель по умолчанию (для первого использования)
+        setTimeout(() => togglePanel(true), 300);
+
+        return { panel, gearBtn, togglePanel };
+    }
+
+    // ===== Обновление фильтра =====
+    function updateFilter() {
+        const overlay = document.getElementById('crt-overlay');
+        if (!overlay) return;
+
+        overlay.style.display = settings.enabled ? 'block' : 'none';
+
+        const grille = document.getElementById('crt-grille');
+        const scanlines = document.getElementById('crt-scanlines');
+        const vignette = document.getElementById('crt-vignette');
+        const chromatic = document.getElementById('crt-chromatic');
+        const color = document.getElementById('crt-color');
+
+        if (grille) grille.style.opacity = settings.aperture / 100;
+        if (scanlines) scanlines.style.opacity = settings.scanlines / 100;
+        
+        if (vignette) {
+            const v = settings.vignette;
+            vignette.style.background = `radial-gradient(ellipse at center, 
+                transparent ${55 - v * 0.2}%, 
+                rgba(0,0,0,0.2) ${60 + v * 0.15}%, 
+                rgba(0,0,0,0.45) ${75 + v * 0.15}%, 
+                rgba(0,0,0,0.6) 100%)`;
+        }
+
+        if (chromatic) {
+            const c = settings.chromatic / 100;
+            chromatic.style.boxShadow = `
+                inset 0 0 ${30 + settings.chromatic * 0.5}px rgba(255,0,0,${0.01 + c * 0.04}),
+                inset 0 0 ${40 + settings.chromatic * 0.7}px rgba(0,0,255,${0.005 + c * 0.03}),
+                0 0 ${20 + settings.chromatic * 0.3}px rgba(255,0,0,${0.01 + c * 0.02})
+            `;
+        }
+
+        if (color) {
+            color.style.filter = `
+                brightness(${settings.brightness}%) 
+                contrast(${settings.contrast}%)
+                saturate(1.05)
+            `;
+        }
+    }
+
+    // ===== Инициализация =====
+    const panelData = createSettingsPanel();
+
+    // Принудительное обновление при загрузке
+    setTimeout(updateFilter, 50);
+
+    console.log('ЭЛТ-фильтр загружен. Настройки сохранены в localStorage.');
 })();
 </script>
 </body>
