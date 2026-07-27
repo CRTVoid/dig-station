@@ -1313,12 +1313,14 @@
   btn.id = 'pf-toggle';
   btn.setAttribute('aria-label', 'Открыть настройки фильтра');
   btn.style.cssText =
-    'position:fixed;bottom:24px;right:24px;z-index:999999;width:44px;height:44px;border-radius:50%;border:none;background:#181830;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;font-family:system-ui,sans-serif;user-select:none;padding:0;';
+    'position:fixed;bottom:24px;right:24px;z-index:999999;width:52px;height:52px;border-radius:50%;border:none;background:#181830;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;font-family:system-ui,sans-serif;user-select:none;padding:0;';
 
   var img = document.createElement('img');
   img.src = ICON_URL;
   img.alt = 'Фильтры';
-  img.style.cssText = 'width:20px;height:20px;display:block;';
+  // Увеличиваем иконку на 100% (было 20px, стало 40px)
+  // и красим в беловато-серый через filter
+  img.style.cssText = 'width:40px;height:40px;display:block;filter:brightness(0) saturate(100%) invert(80%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);';
   btn.appendChild(img);
 
   btn.onmouseenter = function() { this.style.background = '#222244'; };
@@ -1336,7 +1338,7 @@
   var panel = document.createElement('div');
   panel.id = 'pf-panel';
   panel.style.cssText =
-    'position:fixed;bottom:76px;right:24px;z-index:999998;background:rgba(13,13,31,0.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:12px;padding:16px 18px;min-width:210px;max-width:260px;border:1px solid #2a2a4a;opacity:0;transform:scale(0.92) translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s;box-shadow:0 12px 40px rgba(0,0,0,0.6);font-family:system-ui,sans-serif;';
+    'position:fixed;bottom:84px;right:24px;z-index:999998;background:rgba(13,13,31,0.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:12px;padding:16px 18px;min-width:210px;max-width:260px;border:1px solid #2a2a4a;opacity:0;transform:scale(0.92) translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s;box-shadow:0 12px 40px rgba(0,0,0,0.6);font-family:system-ui,sans-serif;';
   document.body.appendChild(panel);
 
   // ========================================
@@ -1566,16 +1568,16 @@
     panel.style.minWidth = '170px';
     panel.style.maxWidth = '200px';
     panel.style.right = '12px';
-    panel.style.bottom = '70px';
+    panel.style.bottom = '78px';
     panel.style.padding = '12px 14px';
     btn.style.bottom = '16px';
     btn.style.right = '16px';
-    btn.style.width = '40px';
-    btn.style.height = '40px';
+    btn.style.width = '48px';
+    btn.style.height = '48px';
     var imgEl = btn.querySelector('img');
     if (imgEl) {
-      imgEl.style.width = '16px';
-      imgEl.style.height = '16px';
+      imgEl.style.width = '36px';
+      imgEl.style.height = '36px';
     }
   }
 
