@@ -1303,14 +1303,13 @@
     // ===== Default Settings =====
     const DEFAULTS = {
         enabled: true,
+        scanlines: 75,
+        scanSize: 3,
         aperture: 80,
         apertureSize: 3,
-        triadOpacity: 40,
+        triadOpacity: 45,
         triadBlur: 2,
-        apertureBlur: 1,
-        vignette: 60,
-        brightness: 105,
-        contrast: 110
+        apertureBlur: 1
     };
 
     // ===== Load Settings =====
@@ -1349,7 +1348,32 @@
         mix-blend-mode: normal;
     `;
 
-    // 1. Aperture Grille Layer
+    // 1. Scanlines Layer
+    const scanlinesLayer = document.createElement('div');
+    scanlinesLayer.id = 'crt-scanlines';
+    scanlinesLayer.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        mix-blend-mode: multiply;
+        opacity: ${settings.scanlines / 100};
+    `;
+    const scanSize = Math.max(2, Math.round(settings.scanSize));
+    scanlinesLayer.style.backgroundImage = `repeating-linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.45) 0px,
+        rgba(0,0,0,0.45) 1px,
+        rgba(255,255,255,0.04) 1px,
+        rgba(255,255,255,0.04) ${scanSize - 1}px,
+        rgba(0,0,0,0.35) ${scanSize - 1}px,
+        rgba(0,0,0,0.35) ${scanSize}px
+    )`;
+    scanlinesLayer.style.backgroundSize = `100% ${scanSize}px`;
+    overlay.appendChild(scanlinesLayer);
+
+    // 2. Aperture Grille Layer
     const grilleLayer = document.createElement('div');
     grilleLayer.id = 'crt-grille-layer';
     grilleLayer.style.cssText = `
@@ -1375,7 +1399,7 @@
     grilleLayer.style.backgroundSize = `${apertureSize}px 100%`;
     overlay.appendChild(grilleLayer);
 
-    // 2. RGB Triads Layer (апертурные триады)
+    // 3. RGB Triads Layer
     const triadLayer = document.createElement('div');
     triadLayer.id = 'crt-triads';
     triadLayer.style.cssText = `
@@ -1390,71 +1414,29 @@
         pointer-events: none;
         background-size: ${apertureSize * 3}px ${apertureSize * 2}px;
         background-image: 
-            /* Red triads */
-            radial-gradient(circle at 20% 50%, rgba(255,0,0,0.25) 0%, rgba(255,0,0,0.25) 30%, transparent 70%),
-            /* Green triads */
-            radial-gradient(circle at 50% 50%, rgba(0,255,0,0.25) 0%, rgba(0,255,0,0.25) 30%, transparent 70%),
-            /* Blue triads */
-            radial-gradient(circle at 80% 50%, rgba(0,0,255,0.25) 0%, rgba(0,0,255,0.25) 30%, transparent 70%),
-            /* Vertical separation */
+            radial-gradient(circle at 20% 50%, rgba(255,0,0,0.30) 0%, rgba(255,0,0,0.30) 30%, transparent 70%),
+            radial-gradient(circle at 50% 50%, rgba(0,255,0,0.30) 0%, rgba(0,255,0,0.30) 30%, transparent 70%),
+            radial-gradient(circle at 80% 50%, rgba(0,0,255,0.30) 0%, rgba(0,0,255,0.30) 30%, transparent 70%),
             repeating-linear-gradient(
                 90deg,
                 transparent 0px,
                 transparent ${apertureSize * 0.5}px,
-                rgba(0,0,0,0.05) ${apertureSize * 0.5}px,
-                rgba(0,0,0,0.05) ${apertureSize * 0.5 + 1}px,
+                rgba(0,0,0,0.04) ${apertureSize * 0.5}px,
+                rgba(0,0,0,0.04) ${apertureSize * 0.5 + 1}px,
                 transparent ${apertureSize * 0.5 + 1}px
             ),
-            /* Horizontal separation */
             repeating-linear-gradient(
                 to bottom,
                 transparent 0px,
                 transparent ${apertureSize * 0.3}px,
-                rgba(0,0,0,0.03) ${apertureSize * 0.3}px,
-                rgba(0,0,0,0.03) ${apertureSize * 0.3 + 1}px,
+                rgba(0,0,0,0.02) ${apertureSize * 0.3}px,
+                rgba(0,0,0,0.02) ${apertureSize * 0.3 + 1}px,
                 transparent ${apertureSize * 0.3 + 1}px
             );
     `;
     overlay.appendChild(triadLayer);
 
-    // 3. Vignette
-    const vignette = document.createElement('div');
-    vignette.id = 'crt-vignette';
-    const v = settings.vignette;
-    vignette.style.cssText = `
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(ellipse at center, 
-            transparent ${50 - v * 0.1}%, 
-            rgba(0,0,0,0.1) ${55 + v * 0.05}%, 
-            rgba(0,0,0,0.35) ${65 + v * 0.15}%, 
-            rgba(0,0,0,0.65) ${80 + v * 0.15}%, 
-            rgba(0,0,0,0.85) 100%
-        );
-        mix-blend-mode: multiply;
-    `;
-    overlay.appendChild(vignette);
-
-    // 4. Color Correction
-    const colorCorrection = document.createElement('div');
-    colorCorrection.id = 'crt-color';
-    colorCorrection.style.cssText = `
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        filter: 
-            brightness(${settings.brightness}%) 
-            contrast(${settings.contrast}%)
-            saturate(1.05);
-    `;
-    overlay.appendChild(colorCorrection);
-
-    // 5. Subtle glow
+    // 4. Subtle glow
     const glow = document.createElement('div');
     glow.style.cssText = `
         position: absolute;
@@ -1563,14 +1545,13 @@
 
         // Controls
         const controls = [
-            { id: 'aperture', label: 'Aperture', min: 0, max: 100, default: 80 },
+            { id: 'scanlines', label: 'Scanlines', min: 0, max: 100, default: 75, step: 1 },
+            { id: 'scanSize', label: 'Scan Size', min: 2, max: 6, default: 3, step: 1 },
+            { id: 'aperture', label: 'Aperture', min: 0, max: 100, default: 80, step: 1 },
             { id: 'apertureSize', label: 'Aper Size', min: 2, max: 6, default: 3, step: 1 },
-            { id: 'triadOpacity', label: 'Triads', min: 0, max: 100, default: 40 },
+            { id: 'triadOpacity', label: 'Triads', min: 0, max: 100, default: 45, step: 1 },
             { id: 'triadBlur', label: 'Triad Blur', min: 0, max: 5, default: 2, step: 0.5 },
-            { id: 'apertureBlur', label: 'Aper Blur', min: 0, max: 3, default: 1, step: 0.5 },
-            { id: 'vignette', label: 'Vignette', min: 0, max: 100, default: 60 },
-            { id: 'brightness', label: 'Brightness', min: 50, max: 150, default: 105 },
-            { id: 'contrast', label: 'Contrast', min: 50, max: 150, default: 110 }
+            { id: 'apertureBlur', label: 'Aper Blur', min: 0, max: 3, default: 1, step: 0.5 }
         ];
 
         controls.forEach(ctrl => {
@@ -1753,6 +1734,23 @@
 
         overlay.style.display = settings.enabled ? 'block' : 'none';
 
+        // Scanlines
+        const scanlines = document.getElementById('crt-scanlines');
+        if (scanlines) {
+            const size = Math.max(2, Math.round(settings.scanSize));
+            scanlines.style.backgroundSize = `100% ${size}px`;
+            scanlines.style.opacity = settings.scanlines / 100;
+            scanlines.style.backgroundImage = `repeating-linear-gradient(
+                to bottom,
+                rgba(0,0,0,0.45) 0px,
+                rgba(0,0,0,0.45) 1px,
+                rgba(255,255,255,0.04) 1px,
+                rgba(255,255,255,0.04) ${size - 1}px,
+                rgba(0,0,0,0.35) ${size - 1}px,
+                rgba(0,0,0,0.35) ${size}px
+            )`;
+        }
+
         // Aperture Grille
         const grille = document.getElementById('crt-grille-layer');
         if (grille) {
@@ -1777,40 +1775,18 @@
                     90deg,
                     transparent 0px,
                     transparent ${size * 0.5}px,
-                    rgba(0,0,0,0.05) ${size * 0.5}px,
-                    rgba(0,0,0,0.05) ${size * 0.5 + 1}px,
+                    rgba(0,0,0,0.04) ${size * 0.5}px,
+                    rgba(0,0,0,0.04) ${size * 0.5 + 1}px,
                     transparent ${size * 0.5 + 1}px
                 ),
                 repeating-linear-gradient(
                     to bottom,
                     transparent 0px,
                     transparent ${size * 0.3}px,
-                    rgba(0,0,0,0.03) ${size * 0.3}px,
-                    rgba(0,0,0,0.03) ${size * 0.3 + 1}px,
+                    rgba(0,0,0,0.02) ${size * 0.3}px,
+                    rgba(0,0,0,0.02) ${size * 0.3 + 1}px,
                     transparent ${size * 0.3 + 1}px
                 )
-            `;
-        }
-
-        // Vignette
-        const vignette = document.getElementById('crt-vignette');
-        if (vignette) {
-            const v = settings.vignette;
-            vignette.style.background = `radial-gradient(ellipse at center, 
-                transparent ${50 - v * 0.1}%, 
-                rgba(0,0,0,0.1) ${55 + v * 0.05}%, 
-                rgba(0,0,0,0.35) ${65 + v * 0.15}%, 
-                rgba(0,0,0,0.65) ${80 + v * 0.15}%, 
-                rgba(0,0,0,0.85) 100%)`;
-        }
-
-        // Color
-        const color = document.getElementById('crt-color');
-        if (color) {
-            color.style.filter = `
-                brightness(${settings.brightness}%) 
-                contrast(${settings.contrast}%)
-                saturate(1.05)
             `;
         }
     }
@@ -1819,7 +1795,7 @@
     createSettingsPanel();
     setTimeout(updateFilter, 50);
 
-    console.log('CRT Filter with RGB triads loaded. Click ⚙ to open settings.');
+    console.log('CRT Filter loaded. Click ⚙ to open settings.');
 })();
 </script>
 </body>
