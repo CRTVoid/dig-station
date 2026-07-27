@@ -1300,290 +1300,279 @@
   'use strict';
 
   // ========================================
-  // 1. ФИЛЬТРЫ (удалены: blur, contrast, vhs, crt, polaroid, noir, inkwell)
-  // ========================================
-
-  var FILTERS = [
-    // CSS
-    { id: 'grayscale', label: 'Черно-белый', value: 'grayscale(100%)' },
-    { id: 'sepia', label: 'Сепия', value: 'sepia(100%)' },
-    { id: 'hue-rotate', label: 'Сдвиг тона', value: 'hue-rotate(180deg) saturate(200%)' },
-    { id: 'invert', label: 'Инверсия', value: 'invert(100%)' },
-    // Ретро
-    { id: 'vintage-warm', label: 'Винтаж тёплый', value: 'sepia(60%) contrast(110%) brightness(95%) saturate(80%)' },
-    { id: 'vintage-cold', label: 'Винтаж холодный', value: 'sepia(40%) saturate(70%) hue-rotate(-10deg) brightness(95%)' },
-    { id: 'pipboy', label: 'Pip-Boy', value: 'grayscale(100%) sepia(100%) hue-rotate(70deg) saturate(300%) brightness(85%) contrast(115%)' },
-    // Instagram
-    { id: 'ig-1977', label: '1977', value: 'sepia(50%) hue-rotate(-30deg) saturate(140%)' },
-    { id: 'ig-nashville', label: 'Nashville', value: 'sepia(40%) saturate(150%) hue-rotate(-20deg) contrast(80%)' },
-    { id: 'ig-lofi', label: 'Lo-Fi', value: 'saturate(80%) contrast(90%) brightness(110%)' },
-    { id: 'ig-clarendon', label: 'Clarendon', value: 'sepia(20%) saturate(180%) contrast(120%) brightness(110%)' },
-    { id: 'ig-gingham', label: 'Gingham', value: 'sepia(30%) saturate(120%) contrast(90%) brightness(105%)' },
-    { id: 'ig-mayfair', label: 'Mayfair', value: 'sepia(30%) saturate(180%) brightness(110%) contrast(110%)' },
-    { id: 'ig-xpro2', label: 'X-Pro II', value: 'sepia(50%) saturate(180%) contrast(120%) brightness(90%)' },
-    { id: 'ig-walden', label: 'Walden', value: 'sepia(40%) saturate(160%) brightness(110%)' },
-    { id: 'ig-hefe', label: 'Hefe', value: 'sepia(40%) saturate(180%) contrast(120%) brightness(110%)' },
-  ];
-
-  var STORAGE_KEY = 'page_filter_id';
-  var htmlEl = document.documentElement;
-
-  // ========================================
-  // 2. SVG-ИКОНКА (кисть)
+  // 1. SVG-ИКОНКА КИСТИ (серая)
   // ========================================
 
   var SVG_ICON =
-    '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>';
+    '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8888aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>';
+
+  var STORAGE_KEY = 'page_filter_settings';
 
   // ========================================
-  // 3. СОЗДАЁМ DOM
+  // 2. СОЗДАЁМ DOM
   // ========================================
 
-  // Кнопка
+  var htmlEl = document.documentElement;
+
+  // Кнопка (без окантовки, серая иконка)
   var btn = document.createElement('button');
   btn.id = 'pf-toggle';
-  btn.setAttribute('aria-label', 'Открыть меню фильтров');
+  btn.setAttribute('aria-label', 'Открыть настройки фильтра');
   btn.innerHTML = SVG_ICON;
   btn.style.cssText =
-    'position:fixed;bottom:24px;right:24px;z-index:999999;width:44px;height:44px;border-radius:50%;border:1px solid #3a3a5a;background:#181830;color:#aaaac8;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s,border-color .2s,color .2s;font-family:system-ui,sans-serif;user-select:none;padding:0;';
-  btn.onmouseenter = function() {
-    if (!this.classList.contains('active')) {
-      this.style.background = '#222244';
-      this.style.borderColor = '#666688';
-      this.style.color = '#ffffff';
-    }
-  };
-  btn.onmouseleave = function() {
-    if (!this.classList.contains('active')) {
-      this.style.background = '#181830';
-      this.style.borderColor = '#3a3a5a';
-      this.style.color = '#aaaac8';
-    }
-  };
+    'position:fixed;bottom:24px;right:24px;z-index:999999;width:44px;height:44px;border-radius:50%;border:none;background:#181830;color:#8888aa;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;font-family:system-ui,sans-serif;user-select:none;padding:0;';
+  btn.onmouseenter = function() { this.style.background = '#222244'; };
+  btn.onmouseleave = function() { this.style.background = '#181830'; };
   document.body.appendChild(btn);
 
-  // Меню
-  var menu = document.createElement('div');
-  menu.id = 'pf-menu';
-  menu.style.cssText =
-    'position:fixed;bottom:76px;right:24px;z-index:999998;background:rgba(13,13,31,0.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:12px;padding:10px 0;min-width:180px;max-width:240px;max-height:60vh;overflow-y:auto;border:1px solid #2a2a4a;opacity:0;transform:scale(0.92) translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s;box-shadow:0 12px 40px rgba(0,0,0,0.6);';
-  menu.style.setProperty('scrollbar-width', 'thin');
-  document.body.appendChild(menu);
-
-  // Стили для скролла
-  var style = document.createElement('style');
-  style.textContent =
-    '#pf-menu::-webkit-scrollbar{width:3px}#pf-menu::-webkit-scrollbar-track{background:transparent}#pf-menu::-webkit-scrollbar-thumb{background:#3a3a5a;border-radius:4px}';
-  document.head.appendChild(style);
-
-  // Статус
-  var status = document.createElement('div');
-  status.id = 'pf-status';
-  status.textContent = 'оригинал';
-  status.style.cssText =
-    'position:fixed;bottom:28px;left:24px;z-index:999997;color:#444466;font-size:0.65rem;background:rgba(13,13,31,0.8);padding:4px 14px;border-radius:14px;border:1px solid #2a2a4a;pointer-events:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:color .3s;font-family:system-ui,sans-serif;';
-  document.body.appendChild(status);
+  // Панель с ползунками
+  var panel = document.createElement('div');
+  panel.id = 'pf-panel';
+  panel.style.cssText =
+    'position:fixed;bottom:76px;right:24px;z-index:999998;background:rgba(13,13,31,0.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:12px;padding:16px 18px;min-width:210px;max-width:260px;border:1px solid #2a2a4a;opacity:0;transform:scale(0.92) translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s;box-shadow:0 12px 40px rgba(0,0,0,0.6);font-family:system-ui,sans-serif;';
+  document.body.appendChild(panel);
 
   // ========================================
-  // 4. СБОРКА МЕНЮ
+  // 3. ПОЛЗУНКИ
   // ========================================
 
-  var groups = {
-    'CSS': FILTERS.slice(0, 4),
-    'Ретро': FILTERS.slice(4, 7),
-    'Instagram': FILTERS.slice(7),
+  var settings = {
+    brightness: { label: 'Яркость', min: 0, max: 200, default: 100, unit: '%', value: 100 },
+    contrast: { label: 'Контраст', min: 0, max: 200, default: 100, unit: '%', value: 100 },
+    saturate: { label: 'Насыщенность', min: 0, max: 200, default: 100, unit: '%', value: 100 },
+    sepia: { label: 'Сепия', min: 0, max: 100, default: 0, unit: '%', value: 0 },
+    grayscale: { label: 'Черно-белый', min: 0, max: 100, default: 0, unit: '%', value: 0 },
+    hueRotate: { label: 'Оттенок', min: 0, max: 360, default: 0, unit: 'deg', value: 0 },
+    blur: { label: 'Размытие', min: 0, max: 10, default: 0, unit: 'px', value: 0 },
+    invert: { label: 'Инверсия', min: 0, max: 100, default: 0, unit: '%', value: 0 },
   };
 
-  Object.keys(groups).forEach(function(groupName) {
-    var groupDiv = document.createElement('div');
-    groupDiv.style.cssText = 'padding:4px 0;';
+  var sliders = {};
 
-    var label = document.createElement('div');
-    label.textContent = groupName;
-    label.style.cssText =
-      'font-size:0.55rem;text-transform:uppercase;color:#555577;letter-spacing:0.8px;padding:4px 14px 4px;font-weight:600;font-family:system-ui,sans-serif;';
-    groupDiv.appendChild(label);
+  Object.keys(settings).forEach(function(key) {
+    var s = settings[key];
 
-    groups[groupName].forEach(function(filter) {
-      var item = document.createElement('button');
-      item.className = 'pf-item';
-      item.dataset.filter = filter.id;
-      item.textContent = filter.label;
-      item.style.cssText =
-        'display:block;width:100%;background:transparent;border:none;color:#8888aa;padding:6px 16px;cursor:pointer;text-align:left;font-size:0.78rem;font-family:system-ui,sans-serif;transition:background .12s,color .12s;border-left:2px solid transparent;';
-      item.onmouseenter = function() {
-        if (!this.classList.contains('active')) {
-          this.style.background = 'rgba(255,255,255,0.04)';
-          this.style.color = '#ddd';
-        }
-      };
-      item.onmouseleave = function() {
-        if (!this.classList.contains('active')) {
-          this.style.background = 'transparent';
-          this.style.color = '#8888aa';
-        }
-      };
-      item.onclick = function(e) {
-        e.stopPropagation();
-        var id = this.dataset.filter;
-        var found = FILTERS.filter(function(f) { return f.id === id; })[0];
-        if (found) applyFilter(found.id, found.value);
-        closeMenu();
-      };
-      groupDiv.appendChild(item);
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'margin-bottom:10px;';
+
+    var labelRow = document.createElement('div');
+    labelRow.style.cssText =
+      'display:flex;justify-content:space-between;font-size:0.7rem;color:#8888aa;margin-bottom:2px;';
+
+    var label = document.createElement('span');
+    label.textContent = s.label;
+    labelRow.appendChild(label);
+
+    var valueDisplay = document.createElement('span');
+    valueDisplay.textContent = s.default + s.unit;
+    valueDisplay.style.cssText = 'color:#aaaac8;font-weight:500;';
+    labelRow.appendChild(valueDisplay);
+
+    wrapper.appendChild(labelRow);
+
+    var input = document.createElement('input');
+    input.type = 'range';
+    input.min = s.min;
+    input.max = s.max;
+    input.value = s.default;
+    input.step = s.min === 0 && s.max === 360 ? 1 : 0.5;
+    input.style.cssText =
+      'width:100%;height:4px;-webkit-appearance:none;appearance:none;background:#2a2a4a;border-radius:4px;outline:none;cursor:pointer;';
+    input.style.setProperty('accent-color', '#555577');
+
+    // Событие изменения
+    input.addEventListener('input', function() {
+      var val = parseFloat(this.value);
+      valueDisplay.textContent = val + s.unit;
+      s.value = val;
+      applyFilter();
     });
 
-    menu.appendChild(groupDiv);
+    wrapper.appendChild(input);
+    panel.appendChild(wrapper);
+
+    sliders[key] = {
+      input: input,
+      display: valueDisplay,
+      settings: s,
+    };
   });
 
-  // Разделитель
-  var divider = document.createElement('div');
-  divider.style.cssText = 'height:1px;background:#2a2a4a;margin:4px 12px;';
-  menu.appendChild(divider);
+  // Кнопка сброса
+  var resetRow = document.createElement('div');
+  resetRow.style.cssText = 'margin-top:6px;padding-top:10px;border-top:1px solid #2a2a4a;text-align:center;';
 
-  // Сброс
   var resetBtn = document.createElement('button');
-  resetBtn.textContent = 'Сбросить фильтр';
+  resetBtn.textContent = 'Сбросить настройки';
   resetBtn.style.cssText =
-    'display:block;width:100%;background:transparent;border:none;color:#555577;padding:6px 16px;cursor:pointer;text-align:left;font-size:0.72rem;font-family:system-ui,sans-serif;border-top:1px solid #2a2a4a;margin-top:6px;padding-top:8px;transition:color .15s;';
+    'background:transparent;border:none;color:#555577;font-size:0.7rem;cursor:pointer;font-family:system-ui,sans-serif;transition:color .15s;padding:4px 12px;';
   resetBtn.onmouseenter = function() { this.style.color = '#f5576c'; };
   resetBtn.onmouseleave = function() { this.style.color = '#555577'; };
   resetBtn.onclick = function(e) {
     e.stopPropagation();
-    resetFilter();
-    closeMenu();
+    resetSettings();
   };
-  menu.appendChild(resetBtn);
+  resetRow.appendChild(resetBtn);
+  panel.appendChild(resetRow);
 
   // ========================================
-  // 5. ЛОГИКА
+  // 4. ЛОГИКА ПРИМЕНЕНИЯ
   // ========================================
 
-  var currentFilterId = null;
+  function buildFilterValue() {
+    var parts = [];
+
+    if (settings.brightness.value !== 100) {
+      parts.push('brightness(' + settings.brightness.value + '%)');
+    }
+    if (settings.contrast.value !== 100) {
+      parts.push('contrast(' + settings.contrast.value + '%)');
+    }
+    if (settings.saturate.value !== 100) {
+      parts.push('saturate(' + settings.saturate.value + '%)');
+    }
+    if (settings.sepia.value > 0) {
+      parts.push('sepia(' + settings.sepia.value + '%)');
+    }
+    if (settings.grayscale.value > 0) {
+      parts.push('grayscale(' + settings.grayscale.value + '%)');
+    }
+    if (settings.hueRotate.value > 0) {
+      parts.push('hue-rotate(' + settings.hueRotate.value + 'deg)');
+    }
+    if (settings.blur.value > 0) {
+      parts.push('blur(' + settings.blur.value + 'px)');
+    }
+    if (settings.invert.value > 0) {
+      parts.push('invert(' + settings.invert.value + '%)');
+    }
+
+    return parts.length ? parts.join(' ') : 'none';
+  }
+
+  function applyFilter() {
+    var value = buildFilterValue();
+    if (value === 'none') {
+      htmlEl.style.filter = '';
+      htmlEl.style.webkitFilter = '';
+    } else {
+      htmlEl.style.filter = value;
+      htmlEl.style.webkitFilter = value;
+    }
+    saveSettings();
+  }
+
+  function resetSettings() {
+    Object.keys(settings).forEach(function(key) {
+      var s = settings[key];
+      s.value = s.default;
+      sliders[key].input.value = s.default;
+      sliders[key].display.textContent = s.default + s.unit;
+    });
+    applyFilter();
+  }
+
+  // ========================================
+  // 5. СОХРАНЕНИЕ / ВОССТАНОВЛЕНИЕ
+  // ========================================
+
+  function saveSettings() {
+    try {
+      var data = {};
+      Object.keys(settings).forEach(function(key) {
+        data[key] = settings[key].value;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (_) {}
+  }
+
+  function restoreSettings() {
+    try {
+      var saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        var data = JSON.parse(saved);
+        Object.keys(data).forEach(function(key) {
+          if (settings[key]) {
+            var val = data[key];
+            settings[key].value = val;
+            sliders[key].input.value = val;
+            sliders[key].display.textContent = val + settings[key].unit;
+          }
+        });
+        applyFilter();
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  // ========================================
+  // 6. УПРАВЛЕНИЕ ПАНЕЛЬЮ
+  // ========================================
+
   var isOpen = false;
 
-  function applyFilter(id, value) {
-    currentFilterId = id;
-    htmlEl.style.filter = value;
-    htmlEl.style.webkitFilter = value;
-    try { localStorage.setItem(STORAGE_KEY, id); } catch (_) {}
-    updateUI(id);
-    status.textContent = getLabel(id);
-    status.style.color = '#8888bb';
-  }
-
-  function resetFilter() {
-    currentFilterId = null;
-    htmlEl.style.filter = '';
-    htmlEl.style.webkitFilter = '';
-    try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
-    updateUI(null);
-    status.textContent = 'оригинал';
-    status.style.color = '#444466';
-  }
-
-  function getLabel(id) {
-    var found = FILTERS.filter(function(f) { return f.id === id; })[0];
-    return found ? found.label : id;
-  }
-
-  function updateUI(activeId) {
-    document.querySelectorAll('.pf-item').forEach(function(el) {
-      var isActive = el.dataset.filter === activeId;
-      el.classList.toggle('active', isActive);
-      if (isActive) {
-        el.style.background = 'rgba(245,87,108,0.10)';
-        el.style.color = '#fff';
-        el.style.borderLeftColor = '#f5576c';
-      } else {
-        el.style.background = 'transparent';
-        el.style.color = '#8888aa';
-        el.style.borderLeftColor = 'transparent';
-      }
-    });
-    btn.classList.toggle('active', !!activeId);
-    if (!!activeId) {
-      btn.style.borderColor = '#f5576c';
-      btn.style.color = '#f5576c';
-      btn.style.background = '#181830';
-    } else {
-      btn.style.borderColor = '#3a3a5a';
-      btn.style.color = '#aaaac8';
-      btn.style.background = '#181830';
-    }
-  }
-
-  function openMenu() {
+  function openPanel() {
     isOpen = true;
-    menu.style.opacity = '1';
-    menu.style.transform = 'scale(1) translateY(0)';
-    menu.style.pointerEvents = 'auto';
+    panel.style.opacity = '1';
+    panel.style.transform = 'scale(1) translateY(0)';
+    panel.style.pointerEvents = 'auto';
     btn.setAttribute('aria-expanded', 'true');
   }
 
-  function closeMenu() {
+  function closePanel() {
     isOpen = false;
-    menu.style.opacity = '0';
-    menu.style.transform = 'scale(0.92) translateY(8px)';
-    menu.style.pointerEvents = 'none';
+    panel.style.opacity = '0';
+    panel.style.transform = 'scale(0.92) translateY(8px)';
+    panel.style.pointerEvents = 'none';
     btn.setAttribute('aria-expanded', 'false');
   }
 
-  function toggleMenu() {
-    isOpen ? closeMenu() : openMenu();
+  function togglePanel() {
+    isOpen ? closePanel() : openPanel();
   }
-
-  // ========================================
-  // 6. СОБЫТИЯ
-  // ========================================
 
   btn.onclick = function(e) {
     e.stopPropagation();
-    toggleMenu();
+    togglePanel();
   };
 
   document.addEventListener('click', function(e) {
     if (isOpen) {
       var target = e.target;
-      if (!menu.contains(target) && target !== btn) {
-        closeMenu();
+      if (!panel.contains(target) && target !== btn) {
+        closePanel();
       }
     }
   });
 
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && isOpen) closeMenu();
+    if (e.key === 'Escape' && isOpen) closePanel();
   });
 
   // ========================================
-  // 7. ВОССТАНОВЛЕНИЕ
+  // 7. ЗАПУСК
   // ========================================
 
-  function restore() {
-    try {
-      var saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        var found = FILTERS.filter(function(f) { return f.id === saved; })[0];
-        if (found) {
-          applyFilter(found.id, found.value);
-          return;
-        }
-      }
-    } catch (_) {}
-    resetFilter();
+  var hasSaved = restoreSettings();
+  if (!hasSaved) {
+    resetSettings();
   }
 
-  restore();
-
-  // ========================================
-  // 8. АДАПТИВ
-  // ========================================
-
+  // Адаптив
   if (window.innerWidth < 500) {
-    status.style.display = 'none';
+    panel.style.minWidth = '170px';
+    panel.style.maxWidth = '200px';
+    panel.style.right = '12px';
+    panel.style.bottom = '70px';
+    panel.style.padding = '12px 14px';
+    btn.style.bottom = '16px';
+    btn.style.right = '16px';
+    btn.style.width = '40px';
+    btn.style.height = '40px';
   }
 
-  console.log('[Фильтры] Загружено ' + FILTERS.length + ' фильтров');
+  console.log('[Фильтры] Панель с ползунками загружена');
 
 })();
 </script>
