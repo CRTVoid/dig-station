@@ -1300,11 +1300,11 @@
   'use strict';
 
   // ========================================
-  // 1. SVG-ИКОНКА КИСТИ (серая)
+  // 1. SVG-ИКОНКА ПАЛИТРЫ (серая)
   // ========================================
 
   var SVG_ICON =
-    '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8888aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>';
+    '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8888aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 22c-1.5 0-3-1-3-3s1.5-3 3-3 3 1 3 3-1.5 3-3 3z"/><path d="M7 7c-1.5 0-3 1-3 3s1.5 3 3 3 3-1 3-3-1.5-3-3-3z"/><path d="M17 7c1.5 0 3 1 3 3s-1.5 3-3 3-3-1-3-3 1.5-3 3-3z"/><path d="M12 4c-1.5 0-3 1-3 3s1.5 3 3 3 3-1 3-3-1.5-3-3-3z"/></svg>';
 
   var STORAGE_KEY = 'page_filter_settings';
 
@@ -1333,7 +1333,7 @@
   document.body.appendChild(panel);
 
   // ========================================
-  // 3. ПОЛЗУНКИ
+  // 3. ПОЛЗУНКИ (без "Размытие")
   // ========================================
 
   var settings = {
@@ -1343,7 +1343,6 @@
     sepia: { label: 'Сепия', min: 0, max: 100, default: 0, unit: '%', value: 0 },
     grayscale: { label: 'Черно-белый', min: 0, max: 100, default: 0, unit: '%', value: 0 },
     hueRotate: { label: 'Оттенок', min: 0, max: 360, default: 0, unit: 'deg', value: 0 },
-    blur: { label: 'Размытие', min: 0, max: 10, default: 0, unit: 'px', value: 0 },
     invert: { label: 'Инверсия', min: 0, max: 100, default: 0, unit: '%', value: 0 },
   };
 
@@ -1380,7 +1379,6 @@
       'width:100%;height:4px;-webkit-appearance:none;appearance:none;background:#2a2a4a;border-radius:4px;outline:none;cursor:pointer;';
     input.style.setProperty('accent-color', '#555577');
 
-    // Событие изменения
     input.addEventListener('input', function() {
       var val = parseFloat(this.value);
       valueDisplay.textContent = val + s.unit;
@@ -1439,9 +1437,6 @@
     }
     if (settings.hueRotate.value > 0) {
       parts.push('hue-rotate(' + settings.hueRotate.value + 'deg)');
-    }
-    if (settings.blur.value > 0) {
-      parts.push('blur(' + settings.blur.value + 'px)');
     }
     if (settings.invert.value > 0) {
       parts.push('invert(' + settings.invert.value + '%)');
