@@ -1300,28 +1300,39 @@
   'use strict';
 
   // ========================================
-  // 1. SVG-ИКОНКА КИСТОЧКИ (серая)
+  // 1. ИКОНКА ИЗ КОРНЯ (theme.svg)
   // ========================================
 
   var ICON_URL = '/theme.svg';
-  var STORAGE_KEY = 'page_filter_settings';
 
   // ========================================
-  // 2. СОЗДАЁМ DOM
+  // 2. СОЗДАЁМ КНОПКУ С ИКОНКОЙ
   // ========================================
 
-  var htmlEl = document.documentElement;
+  var btn = document.createElement('button');
+  btn.id = 'pf-toggle';
+  btn.setAttribute('aria-label', 'Открыть настройки фильтра');
+  btn.style.cssText =
+    'position:fixed;bottom:24px;right:24px;z-index:999999;width:44px;height:44px;border-radius:50%;border:none;background:#181830;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;font-family:system-ui,sans-serif;user-select:none;padding:0;';
 
-  // Кнопка (без окантовки, серая иконка)
   var img = document.createElement('img');
   img.src = ICON_URL;
   img.alt = 'Фильтры';
   img.style.cssText = 'width:20px;height:20px;display:block;';
+  btn.appendChild(img);
+
   btn.onmouseenter = function() { this.style.background = '#222244'; };
   btn.onmouseleave = function() { this.style.background = '#181830'; };
+
   document.body.appendChild(btn);
 
-  // Панель с ползунками
+  // ========================================
+  // 3. ПАНЕЛЬ С ПОЛЗУНКАМИ
+  // ========================================
+
+  var STORAGE_KEY = 'page_filter_settings';
+  var htmlEl = document.documentElement;
+
   var panel = document.createElement('div');
   panel.id = 'pf-panel';
   panel.style.cssText =
@@ -1329,7 +1340,7 @@
   document.body.appendChild(panel);
 
   // ========================================
-  // 3. ПОЛЗУНКИ (без "Размытие")
+  // 4. ПОЛЗУНКИ (7 штук, без "Размытие")
   // ========================================
 
   var settings = {
@@ -1410,7 +1421,7 @@
   panel.appendChild(resetRow);
 
   // ========================================
-  // 4. ЛОГИКА ПРИМЕНЕНИЯ
+  // 5. ЛОГИКА
   // ========================================
 
   function buildFilterValue() {
@@ -1464,7 +1475,7 @@
   }
 
   // ========================================
-  // 5. СОХРАНЕНИЕ / ВОССТАНОВЛЕНИЕ
+  // 6. СОХРАНЕНИЕ
   // ========================================
 
   function saveSettings() {
@@ -1498,7 +1509,7 @@
   }
 
   // ========================================
-  // 6. УПРАВЛЕНИЕ ПАНЕЛЬЮ
+  // 7. УПРАВЛЕНИЕ ПАНЕЛЬЮ
   // ========================================
 
   var isOpen = false;
@@ -1542,7 +1553,7 @@
   });
 
   // ========================================
-  // 7. ЗАПУСК
+  // 8. ЗАПУСК
   // ========================================
 
   var hasSaved = restoreSettings();
@@ -1561,6 +1572,11 @@
     btn.style.right = '16px';
     btn.style.width = '40px';
     btn.style.height = '40px';
+    var imgEl = btn.querySelector('img');
+    if (imgEl) {
+      imgEl.style.width = '16px';
+      imgEl.style.height = '16px';
+    }
   }
 
   console.log('[Фильтры] Панель с ползунками загружена');
