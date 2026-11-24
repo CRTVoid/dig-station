@@ -582,7 +582,8 @@
             async function fetchTrackFromXML(stationId) {
                 if (!stationId) return;
                 try {
-                    const proxyUrl = `https://api.cors.lol/?url=${encodeURIComponent(`https://somafm.com/channels.xml?_=${Date.now()}`)}`;
+                    const targetUrl = `https://somafm.com/channels.xml?_=${Date.now()}`;
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
                     const response = await fetch(proxyUrl);
                     if (!response.ok) throw new Error('Network error');
                     const xmlText = await response.text();
